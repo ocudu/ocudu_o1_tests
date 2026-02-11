@@ -1,0 +1,117 @@
+#
+# Copyright 2021-2026 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+services:
+
+  netconf:
+    image: ocudu/netconf:latest
+    build:
+      context: ../ocudu_netconf
+      dockerfile: Dockerfile
+    entrypoint: ["entrypoint.sh", "/config/default_config.xml"]
+    container_name: ocudu-netconf
+    ports:
+      # Comment to hide netconf port from outside of the docker network
+      - 830:830
+    volumes:
+      - ../ocudu_netconf:/config
+      - ../ocudu_netconf:/etc/netconf-running
+    networks:
+      smo:
+        ipv4_address: 172.21.0.14
+
+  o1_adapter:
+    image: ocudu/o1_adapter:latest
+    build:
+      context: ../ocudu_o1_adapter
+      dockerfile: Dockerfile
+    container_name: ocudu-o1_adapter
+    ports:
+      - 5000:5000
+    tty: true
+    command: python3 ./src/o1_adapter.py --netconf_host 172.21.0.14
+    healthcheck:
+      test: curl --fail http://localhost:5000/status || exit 1
+      interval: 10s
+      timeout: 1s
+      retries: 60
+    depends_on:
+      netconf:
+        condition: service_started
+      mock_gnb:
+        condition: service_started
+    environment:
+      WS_HOST: ${O1_ADAPTER_WS_HOST:-localhost}
+      WS_PORT: ${O1_ADAPTER_WS_PORT:-8001}
+      O1_ADAPTER_LOGLEVEL: DEBUG
+    volumes:
+      # Save generated config file to /tmp/config.yml
+      - ../ocudu_o1_adapter:/tmp
+      - ../ocudu_o1_adapter/templates:/usr/src/app/templates
+    networks:
+      smo:
+        ipv4_address: 172.21.0.13
+
+  mock_gnb:
+    image: ocudu/mock-gnb:latest
+    build:
+      context: ./mocks/mock_gnb
+      dockerfile: Dockerfile
+    container_name: ocudu-mock-gnb
+    environment:
+      MOCK_GNB_PORT: "8001"
+      MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
+      MOCK_GNB_LOGLEVEL: INFO
+    networks:
+      smo:
+        ipv4_address: 172.21.0.16
+    profiles: ["test"]
+    volumes:
+      - ../ocudu_o1_adapter:/tmp
+    restart: always
+    healthcheck:
+      test: curl --fail http://172.21.0.13:5000/config-healthy || exit 1
+      interval: 10s
+      timeout: 1s
+      retries: 1      
+
+  o1_adapter_tests:
+    image: ocudu/o1_adapter-tests:latest
+    build:
+      context: ../ocudu_o1_adapter/tests
+      dockerfile: Dockerfile
+    container_name: ocudu-o1_adapter-tests
+    depends_on:
+      netconf:
+        condition: service_started
+      mock_gnb:
+        condition: service_started
+      o1_adapter:
+        condition: service_healthy
+    environment:
+      NETCONF_HOST: ocudu-netconf
+      NETCONF_PORT: "830"
+      NETCONF_USERNAME: root
+      NETCONF_PASSWORD: root
+      O1_ADAPTER_HOST: ocudu-o1_adapter
+      O1_ADAPTER_PORT: "5000"
+      CONFIG_PATH: /tmp/config.yaml
+      MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
+    volumes:
+      - ../ocudu_o1_adapter:/tmp
+    networks:
+      smo:
+        ipv4_address: 172.21.0.15
+    profiles: ["test"]
+
+networks:
+  smo:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/24
