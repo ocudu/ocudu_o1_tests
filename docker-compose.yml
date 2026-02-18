@@ -33,9 +33,9 @@ services:
     ports:
       - 5000:5000
     tty: true
-    command: python3 ./src/o1_adapter.py --netconf_host 172.21.0.14
+    command: python3 ./src/o1_adapter.py --netconf_host 172.21.0.14 --ws_host mock_gnb --ws_port 8001
     healthcheck:
-      test: curl --fail http://localhost:5000/status || exit 1
+      test: python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/status')"
       interval: 10s
       timeout: 1s
       retries: 60
@@ -45,13 +45,12 @@ services:
       mock_gnb:
         condition: service_started
     environment:
-      WS_HOST: ${O1_ADAPTER_WS_HOST:-localhost}
+      WS_HOST: ${O1_ADAPTER_WS_HOST:-mock_gnb}
       WS_PORT: ${O1_ADAPTER_WS_PORT:-8001}
       O1_ADAPTER_LOGLEVEL: DEBUG
-    #volumes:
-      # Save generated config file to /tmp/config.yml
-      #- ../ocudu_o1_adapter:/tmp
-      #- ../ocudu_o1_adapter/templates:/usr/src/app/templates
+    volumes:
+      # Save generated config file to /tmp/config.yml and make it available to the test container
+      - shared-data:/tmp
     networks:
       smo:
         ipv4_address: 172.21.0.13
@@ -74,21 +73,21 @@ services:
       smo:
         ipv4_address: 172.21.0.16
     profiles: ["test"]
-    #volumes:
-    #  - ../ocudu_o1_adapter:/tmp
+    volumes:
+      - shared-data:/tmp
     restart: always
     healthcheck:
-      test: curl --fail http://172.21.0.13:5000/config-healthy || exit 1
+      test: python -c "import urllib.request; urllib.request.urlopen('http://172.21.0.13:5000/config-healthy')"
       interval: 10s
       timeout: 1s
       retries: 1      
 
-  o1_adapter_tests:
-    image: ocudu/o1_adapter-tests:latest
+  o1_tests:
+    image: ocudu/o1_tests:latest
     build:
       context: tests
       dockerfile: Dockerfile
-    container_name: ocudu-o1_adapter-tests
+    container_name: ocudu-o1_tests
     depends_on:
       netconf:
         condition: service_started
@@ -105,12 +104,15 @@ services:
       O1_ADAPTER_PORT: "5000"
       CONFIG_PATH: /tmp/config.yaml
       MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
-    #volumes:
-    #  - ../ocudu_o1_adapter:/tmp
+    volumes:
+      - shared-data:/tmp
     networks:
       smo:
         ipv4_address: 172.21.0.15
     profiles: ["test"]
+
+volumes:
+  shared-data:
 
 networks:
   smo:
