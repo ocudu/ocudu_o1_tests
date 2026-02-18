@@ -75,7 +75,7 @@ services:
     profiles: ["test"]
     volumes:
       - shared-data:/tmp
-    restart: always
+    restart: always # The quit command in the test will stop the container, but we want it to be restarted.
     healthcheck:
       test: python -c "import urllib.request; urllib.request.urlopen('http://172.21.0.13:5000/config-healthy')"
       interval: 10s

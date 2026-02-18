@@ -30,7 +30,7 @@ def main() -> int:
         "--abort-on-container-exit",
         "--exit-code-from",
         "o1_tests",
-        # "o1_tests",
+        "o1_tests",
     ]
 
     down_cmd = [
@@ -46,7 +46,6 @@ def main() -> int:
     env.setdefault("O1_ADAPTER_WS_HOST", "ocudu-mock-gnb")
     env.setdefault("O1_ADAPTER_WS_PORT", "8001")
     env.setdefault("MOCK_GNB_EVENT_LOG", "/tmp/mock_gnb_events.jsonl")
-    env.setdefault("NETCONF_DEFAULT_CFG", "default_config.xml")
 
     up_proc = subprocess.run(up_cmd, cwd=compose_dir, check=False, env=env)
     try:

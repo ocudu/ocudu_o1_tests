@@ -16,7 +16,11 @@ from typing import Any, Dict
 
 import websockets
 
-EVENT_LOG_PATH = Path(os.getenv("MOCK_GNB_EVENT_LOG", "")).expanduser() if os.getenv("MOCK_GNB_EVENT_LOG") else None
+EVENT_LOG_PATH = (
+    Path(os.getenv("MOCK_GNB_EVENT_LOG", "")).expanduser()
+    if os.getenv("MOCK_GNB_EVENT_LOG")
+    else None
+)
 EVENT_LOG_LOCK = asyncio.Lock()
 
 
@@ -91,9 +95,18 @@ async def main():
     if EVENT_LOG_PATH and EVENT_LOG_PATH.exists():
         EVENT_LOG_PATH.unlink()
 
-    async with websockets.serve(client_handler, host, port):
+    stop_event = asyncio.Event()
+
+    async def handler_with_shutdown(websocket: websockets.WebSocketServerProtocol):
+        await client_handler(websocket)
+        if websocket.close_code is not None:
+            # If the client requested quit, client_handler closed the socket.
+            # Signal shutdown after servicing the quit command.
+            stop_event.set()
+
+    async with websockets.serve(handler_with_shutdown, host, port):
         logging.info("Mock gNB listening on %s:%d", host, port)
-        await asyncio.Future()  # Run forever
+        await stop_event.wait()
 
 
 if __name__ == "__main__":
