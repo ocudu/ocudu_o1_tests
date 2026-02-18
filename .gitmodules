@@ -1,0 +1,6 @@
+[submodule "ocudu_elements/ocudu_o1_adapter"]
+	path = ocudu_elements/ocudu_o1_adapter
+	url = https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
+[submodule "ocudu_elements/ocudu_netconf"]
+	path = ocudu_elements/ocudu_netconf
+	url = https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
