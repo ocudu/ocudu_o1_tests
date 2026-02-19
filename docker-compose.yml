@@ -72,7 +72,7 @@ services:
     networks:
       smo:
         ipv4_address: 172.21.0.16
-    profiles: ["test"]
+    profiles: ["test", "dev"]
     volumes:
       - shared-data:/tmp
     restart: always # The quit command in the test will stop the container, but we want it to be restarted.
