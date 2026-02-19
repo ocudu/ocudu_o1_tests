@@ -17,9 +17,10 @@ services:
       timeout: 10s
       retries: 45
     volumes:
-      - ./sdnc-web/odlux.application.list:/app/odlux.application.list
+      - ./third_party_elements/smo/sdnc-web/odlux.application.list:/app/odlux.application.list
     networks:
-      - smo
+      smo:
+        ipv4_address: 172.21.0.100
 
   sdnr:
     image: ${SDNC_IMAGE}
@@ -44,8 +45,8 @@ services:
       - SDNR_NETCONF_CALLHOME_ENABLED=true
       - JAVA_OPTS=-Xms256m -Xmx4g
     volumes:
-      - ./sdnc/devicemanager.properties:/opt/opendaylight/etc/devicemanager.properties
-      - ./sdnc/mountpoint-registrar.properties:/opt/opendaylight/etc/mountpoint-registrar.properties
+      - ./third_party_elements/smo/sdnc/devicemanager.properties:/opt/opendaylight/etc/devicemanager.properties
+      - ./third_party_elements/smo/sdnc/mountpoint-registrar.properties:/opt/opendaylight/etc/mountpoint-registrar.properties
     depends_on:
       - sdnrdb
     networks:
@@ -63,7 +64,7 @@ services:
     #    image: ${DCAE_VES_COLLECTOR_IMAGE}
     image: ${VES_COLLECTOR_IMAGE}-modified
     build:
-      context: ./dcae/ves-image
+      context: ./third_party_elements/smo/dcae/ves-image
       args:
         - BASEIMAGE=${VES_COLLECTOR_IMAGE}
     container_name: ves-collector
@@ -76,14 +77,13 @@ services:
       # - 8080:8080
       - 8443:8443
     volumes:
-      - ./dcae/collector.properties:/opt/app/VESCollector/etc/collector.properties
-      - ./dcae/ves-dmaap-config.json:/opt/app/VESCollector/etc/ves-dmaap-config.json
+      - ./third_party_elements/smo/dcae/collector.properties:/opt/app/VESCollector/etc/collector.properties
+      - ./third_party_elements/smo/dcae/ves-dmaap-config.json:/opt/app/VESCollector/etc/ves-dmaap-config.json
   #    - ./dcae/externalRepo:/opt/app/VESCollector/etc/externalRepo
 
   zookeeper:
     image: ${ZOOKEEPER_IMAGE}
     container_name: zookeeper
-
     command: [ "sh", "-c", "bin/zookeeper-server-start.sh config/zookeeper.properties" ]
     # ports:
     #  - 2181:2181
@@ -99,7 +99,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/zookeeper/secrets/jaas/zk_server_jaas.conf -Dzookeeper.kerberos.removeHostFromPrincipal=true -Dzookeeper.kerberos.removeRealmFromPrincipal=true -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider -Dzookeeper.requireClientAuthScheme=sasl
     volumes:
-      - ./dmaap/zk_server_jaas.conf:/etc/zookeeper/secrets/jaas/zk_server_jaas.conf
+      - ./third_party_elements/smo/dmaap/zk_server_jaas.conf:/etc/zookeeper/secrets/jaas/zk_server_jaas.conf
       # ports:
       # - 2181:2181
     networks:
@@ -129,7 +129,7 @@ services:
       # Reduced the number of partitions only to avoid the timeout error for the first subscribe call in slow environment
       KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 2
     volumes:
-      - ./dmaap/zk_client_jaas.conf:/etc/kafka/secrets/jaas/zk_client_jaas.conf
+      - ./third_party_elements/smo/dmaap/zk_client_jaas.conf:/etc/kafka/secrets/jaas/zk_client_jaas.conf
     networks:
       - smo
     # ports:
