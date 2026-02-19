@@ -149,4 +149,7 @@ services:
 
 networks:
   smo:
-    external: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/24
