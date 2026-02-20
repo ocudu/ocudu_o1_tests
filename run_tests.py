@@ -46,6 +46,8 @@ def main() -> int:
         "compose",
         "-f",
         str(compose_file),
+        "--profile",
+        "test",
         "down",
         "--remove-orphans",
     ]
