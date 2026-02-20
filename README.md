@@ -1,6 +1,14 @@
 OCUDU O1 Integration Tests
 ===
 
+# Checkout git submodules
+
+This repository contains two git submodules which have to be initiated locally. They are in `/ocudu_elements` and point to the repos `ocudu_o1_adapter` and `ocudu_netconf` sitting in [OCUDU ORAN applications](https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps).
+
+To initiate them, from the root directory call `git submodule init` and then `git submodule update`.
+
+Usually they should point to the head of the two projects, but if you need them to point to another commit simply `cd` to the repo you want to change (e.g. `cd ocudu_elements/ocudu_o1_adapter`) and call `git fetch` followed by `git checkout <insert checkout hash>`. 
+
 # Running self-contained integration tests manually
 
 This launches the tests but keeps the containers running even after the test cases completed.
@@ -34,12 +42,11 @@ docker compose -f docker-compose.smo.yml --env-file smo.env up
 By default the SMO web interface is available under http://172.21.0.100:8080. Login is `admin/admin`.
 Note that it might take a while for the services to become ready and to login.
 
-To connect to the netconf server of the gNB, go to "Connect->Add Node" and add a new
-connection using the local IP, i.e. `172.21.0.14`. Credentials will be `root/root` by default.
-
-
 
 # Launch all together
 ```bash
-docker compose -f docker-compose.smo.yml -f docker-compose.yml --profile dev up
+docker compose -f docker-compose.smo.yml --env-file smo.env -f docker-compose.yml --profile dev up
 ```
+
+When launching both docker yml's you can connect to the SMO web interface as described in the section [above](#launch-minimal-smo-standalone).
+Then, to connect to the netconf server of the gNB, go to "Connect->Add Node" and add a new connection using the local IP, i.e. `172.21.0.14`. Credentials will be `root/root` by default.
