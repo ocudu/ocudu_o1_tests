@@ -54,6 +54,7 @@ services:
     networks:
       smo:
         ipv4_address: 172.21.0.13
+    profiles: ["test", "dev"]
 
   mock_gnb:
     image: ocudu/mock-gnb:latest
