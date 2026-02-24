@@ -63,10 +63,13 @@ class Installer:
         if path is None:
             path=self.getDstFolder()
         if os.path.exists(path) and os.path.isdir(path):
-            # Iterate over all files and directories in the given path
-            for filename in os.listdir(path):
-                if filename.startswith("."):
-                    continue
+            #
+# Copyright 2021-2026 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
                 fmatch=False
                 # Get the absolute path of the file/directory
                 abs_path = os.path.join(path, filename)
