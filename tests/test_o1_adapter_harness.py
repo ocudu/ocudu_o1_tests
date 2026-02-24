@@ -110,7 +110,7 @@ def test_initial_configuration_written(config_path: Path, load_config):
 
 
 @pytest.mark.timeout(240)
-def test_runtime_ssb_update_does_not_trigger_restart(
+def test_runtime_ssb_update_sends_ws_command(
     netconf_manager, load_config, o1_adapter_base_url
 ):
     """Runtime SSB power change should update config without requiring a restart."""
@@ -206,14 +206,11 @@ def test_rrm_policy_ratio_update_sends_ws_command(
     session = requests.Session()
     config = load_config()
     slicing_cfg = config["cell_cfg"]["slicing"][0]
-    initial_ratio = int(slicing_cfg["sched_cfg"]["max_prb_policy_ratio"])
+    initial_ratio = int(slicing_cfg["sched_cfg"]["min_prb_policy_ratio"])
     new_ratio = initial_ratio - 5 if initial_ratio > 10 else initial_ratio + 5
-    new_ratio = 10
 
     try:
         _update_rrm_policy_min_ratio(netconf_manager, new_ratio)
-
-        # time.sleep(5)
 
         def _rrm_event_received():
             events = [
@@ -225,11 +222,11 @@ def test_rrm_policy_ratio_update_sends_ws_command(
                 policies = event.get("policies")
                 candidate = None
                 if isinstance(policies, dict):
-                    candidate = policies.get("max_prb_policy_ratio")
+                    candidate = policies.get("min_prb_policy_ratio")
                 elif isinstance(policies, list) and policies:
                     first = policies[0]
                     if isinstance(first, dict):
-                        candidate = first.get("max_prb_policy_ratio")
+                        candidate = first.get("min_prb_policy_ratio")
                 try:
                     if int(candidate) == new_ratio:
                         return event
@@ -237,8 +234,10 @@ def test_rrm_policy_ratio_update_sends_ws_command(
                     continue
             return None
 
-        # _wait_for_condition(_rrm_event_received, timeout=90)
+        # validates that adapter sent a runtime WS command
+        _wait_for_condition(_rrm_event_received, timeout=90)
 
+        # validates config-file propagation
         _wait_for_condition(
             lambda: int(
                 load_config()["cell_cfg"]["slicing"][0]["sched_cfg"][
@@ -257,7 +256,7 @@ def test_rrm_policy_ratio_update_sends_ws_command(
             _wait_for_condition(
                 lambda: int(
                     load_config()["cell_cfg"]["slicing"][0]["sched_cfg"][
-                        "max_prb_policy_ratio"
+                        "min_prb_policy_ratio"
                     ]
                 )
                 == initial_ratio,
