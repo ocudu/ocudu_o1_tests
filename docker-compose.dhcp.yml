@@ -1,0 +1,23 @@
+#
+# Copyright 2021-2026 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+services:
+  dhcp_server:
+    image: ocudu/dhcp-server:latest
+    build:
+      context: ocudu_elements/ocudu_dhcp/server
+      dockerfile: Dockerfile
+    entrypoint: ["entrypoint.sh"]
+    container_name: ocudu-dhcp-server-isc-kea
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - kea4-var:/var/lib/kea
+
+volumes:
+  kea4-var:
