@@ -1,0 +1,9 @@
+version = 1
+
+[[annotations]]
+path = [
+    "devicemanager.properties",
+    "mountpoint-registrar.properties",
+]
+SPDX-FileCopyrightText = ""
+SPDX-License-Identifier = ""

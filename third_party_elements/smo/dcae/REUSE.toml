@@ -1,0 +1,14 @@
+version = 1
+
+[[annotations]]
+path = [
+    "certs/**",
+    "ves-image/**",
+    "collector.properties",
+    "dfc_mount_config.yaml",
+    "pm_mount_config.yaml",
+    "ves-collector.externalrepo.config.json",
+    "ves-dmaap-config.json",
+]
+SPDX-FileCopyrightText = ""
+SPDX-License-Identifier = ""
