@@ -1,2 +1,2 @@
-/\.git/
-/third_party_elements/
+\.git/
+third_party_elements/
