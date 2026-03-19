@@ -28,9 +28,60 @@ include:
 
 stages:
   - ci
+  - compose
+
+.o1-tests:
+  - changes: &o1_test_changes
+      paths:
+        - .gitlab-ci.yml
+        - docker-compose.yml
+        - run_tests.py
+        - mocks/**/*
+        - tests/**/*
+        - ocudu_elements/ocudu_netconf
+        - ocudu_elements/ocudu_o1_adapter
+
+.docker compose:
+  stage: compose
+  image: docker:24.0.7-dind
+  tags:
+    - ${OCUDU_RUNNER_TAG}-amd64
+  timeout: 2h
+  retry: 2
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  before_script: &docker_setup
+    - |
+      export DOCKER_HOST=unix:///var/run/docker.sock
+      export DOCKER_TLS_CERTDIR=""
+      dockerd-entrypoint.sh --host=${DOCKER_HOST} --tls=false 2>&1 &
+    - |
+      i=0
+      while ! docker info >/dev/null 2>&1; do
+        i=$((i+1))
+        if [ "$i" -ge 60 ]; then
+          echo "ERROR: dockerd not ready after 60s"
+          exit 1
+        fi
+        sleep 1
+      done
+    - apk add --no-cache python3
 
 headers:
   stage: ci
   extends: .headers
   variables:
     IGNORE_PATH: third_party_elements/
+
+o1 integration tests:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        <<: *o1_test_changes
+    - if: $ON_DEFAULT_BRANCH
+      changes:
+        <<: *o1_test_changes
+        compare_to: "$CI_COMMIT_BEFORE_SHA"
+  script:
+    - python3 run_tests.py
