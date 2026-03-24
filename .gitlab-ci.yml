@@ -65,7 +65,7 @@ stages:
         fi
         sleep 1
       done
-    - apk add --no-cache python3
+    - apk add --no-cache git python3
 
 headers:
   stage: ci
@@ -76,6 +76,7 @@ headers:
 o1 integration tests:
   extends: .docker compose
   rules:
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
     - if: $ON_MR
       changes:
         <<: *o1_test_changes
@@ -84,4 +85,28 @@ o1 integration tests:
         <<: *o1_test_changes
         compare_to: "$CI_COMMIT_BEFORE_SHA"
   script:
+    - |
+      if [ -n "${O1_TESTS_UPSTREAM_COMPONENT:-}" ]; then
+        case "$O1_TESTS_UPSTREAM_COMPONENT" in
+          ocudu_netconf)
+            SUBMODULE_PATH="ocudu_elements/ocudu_netconf"
+            ;;
+          ocudu_o1_adapter)
+            SUBMODULE_PATH="ocudu_elements/ocudu_o1_adapter"
+            ;;
+          *)
+            echo "Unsupported upstream component: $O1_TESTS_UPSTREAM_COMPONENT"
+            exit 1
+            ;;
+        esac
+
+        echo "Testing $O1_TESTS_UPSTREAM_COMPONENT from $O1_TESTS_UPSTREAM_PROJECT_PATH"
+        echo "Pipeline kind: ${O1_TESTS_UPSTREAM_PIPELINE_KIND:-unknown}"
+        echo "Ref: $O1_TESTS_UPSTREAM_REF"
+        echo "SHA: $O1_TESTS_UPSTREAM_SHA"
+        git -C "$SUBMODULE_PATH" remote set-url origin "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${O1_TESTS_UPSTREAM_PROJECT_PATH}.git"
+        git -C "$SUBMODULE_PATH" fetch --no-tags origin "$O1_TESTS_UPSTREAM_REF"
+        test "$(git -C "$SUBMODULE_PATH" rev-parse FETCH_HEAD)" = "$O1_TESTS_UPSTREAM_SHA"
+        git -C "$SUBMODULE_PATH" checkout --detach "$O1_TESTS_UPSTREAM_SHA"
+      fi
     - python3 run_tests.py
