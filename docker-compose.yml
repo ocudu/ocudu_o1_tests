@@ -24,11 +24,11 @@ services:
     build:
       context: ocudu_elements/ocudu_o1_adapter
       dockerfile: Dockerfile
-    container_name: ocudu-o1_adapter
+    container_name: ocudu-o1-adapter
     ports:
       - 5000:5000
     tty: true
-    command: python3 ./src/o1_adapter.py --netconf_host 172.21.0.14 --ws_host mock_gnb --ws_port 8001
+    command: python3 ./src/o1_adapter.py --netconf_host 172.21.0.14 --ws_host ocudu-mock-gnb --ws_port 8001
     healthcheck:
       test: python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/status')"
       interval: 10s
@@ -40,7 +40,7 @@ services:
       mock_gnb:
         condition: service_started
     environment:
-      WS_HOST: ${O1_ADAPTER_WS_HOST:-mock_gnb}
+      WS_HOST: ${O1_ADAPTER_WS_HOST:-ocudu-mock-gnb}
       WS_PORT: ${O1_ADAPTER_WS_PORT:-8001}
       O1_ADAPTER_LOGLEVEL: DEBUG
     volumes:
@@ -83,7 +83,7 @@ services:
     build:
       context: tests
       dockerfile: Dockerfile
-    container_name: ocudu-o1_tests
+    container_name: ocudu-o1-tests
     depends_on:
       netconf:
         condition: service_started
@@ -96,7 +96,7 @@ services:
       NETCONF_PORT: "830"
       NETCONF_USERNAME: root
       NETCONF_PASSWORD: root
-      O1_ADAPTER_HOST: ocudu-o1_adapter
+      O1_ADAPTER_HOST: ocudu-o1-adapter
       O1_ADAPTER_PORT: "5000"
       CONFIG_PATH: /tmp/config.yaml
       MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
