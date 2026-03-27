@@ -101,11 +101,9 @@ o1 integration tests:
         esac
 
         echo "Testing $O1_TESTS_UPSTREAM_COMPONENT from $O1_TESTS_UPSTREAM_PROJECT_PATH"
-        echo "Pipeline kind: ${O1_TESTS_UPSTREAM_PIPELINE_KIND:-unknown}"
-        echo "Ref: $O1_TESTS_UPSTREAM_REF"
         echo "SHA: $O1_TESTS_UPSTREAM_SHA"
         git -C "$SUBMODULE_PATH" remote set-url origin "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${O1_TESTS_UPSTREAM_PROJECT_PATH}.git"
-        git -C "$SUBMODULE_PATH" fetch --no-tags origin "$O1_TESTS_UPSTREAM_REF"
+        git -C "$SUBMODULE_PATH" fetch --no-tags origin "$O1_TESTS_UPSTREAM_SHA"
         test "$(git -C "$SUBMODULE_PATH" rev-parse FETCH_HEAD)" = "$O1_TESTS_UPSTREAM_SHA"
         git -C "$SUBMODULE_PATH" checkout --detach "$O1_TESTS_UPSTREAM_SHA"
       fi
