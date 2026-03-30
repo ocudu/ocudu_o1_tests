@@ -107,4 +107,15 @@ o1 integration tests:
         test "$(git -C "$SUBMODULE_PATH" rev-parse FETCH_HEAD)" = "$O1_TESTS_UPSTREAM_SHA"
         git -C "$SUBMODULE_PATH" checkout --detach "$O1_TESTS_UPSTREAM_SHA"
       fi
+    - mkdir -p artifacts
+    - export O1_TEST_RESULTS_DIR="${CI_PROJECT_DIR}/artifacts"
     - python3 run_tests.py
+  after_script:
+    - mv "${CI_PROJECT_DIR}/artifacts/out.xml" "${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml" || true
+  artifacts:
+    when: always
+    reports:
+      junit: ${CI_JOB_ID}_xunit.xml
+    paths:
+      - ${CI_JOB_ID}_xunit.xml
+    expire_in: 5 days

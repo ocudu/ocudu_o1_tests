@@ -102,6 +102,7 @@ services:
       MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
     volumes:
       - shared-data:/tmp
+      - ${O1_TEST_RESULTS_DIR:-./artifacts}:/opt/tests/log
     networks:
       smo:
         ipv4_address: 172.21.0.15

@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENTRYPOINT ["pytest", "-vv", "--maxfail=1", "--disable-warnings"]
+ENTRYPOINT ["pytest"]
