@@ -79,7 +79,7 @@ services:
       retries: 1      
 
   gnb_yaml_validator:
-    image: ${GNB_DRYRUN_IMAGE:-registry.gitlab.com/ocudu/ocudu/ocudu_nightly_avx2:latest}
+    image: registry.gitlab.com/ocudu/ocudu/ocudu_nightly_avx2:latest
     container_name: ocudu-gnb-yaml-validator
     entrypoint: ["/bin/sh", "/opt/gnb_yaml_validator/gnb_dryrun.sh"]
     network_mode: "none"

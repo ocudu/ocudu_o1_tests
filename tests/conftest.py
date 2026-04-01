@@ -101,3 +101,19 @@ def read_ws_events(ws_event_log_path: Path):
             return [json.loads(line) for line in handle if line.strip()]
 
     return _reader
+
+
+@pytest.fixture(scope="session")
+def gnb_dryrun_result():
+    """Return the result of the gNB YAML validator sidecar dry-run check."""
+    result_path = Path("/tmp/gnb-dryrun.result")
+    _wait_for(
+        lambda: result_path.exists() and result_path.stat().st_size > 0,
+        timeout=240,
+    )
+
+    lines = result_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    return {
+        "status_code": int(lines[0]),
+        "logs": "\n".join(lines[1:]),
+    }

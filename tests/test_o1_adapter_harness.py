@@ -105,6 +105,14 @@ def test_initial_configuration_written(config_path: Path, load_config):
 
 
 @pytest.mark.timeout(240)
+def test_rendered_configuration_accepts_gnb_dryrun(gnb_dryrun_result):
+    """Ensure the rendered config can be loaded by the gNB in dry-run mode."""
+    assert gnb_dryrun_result["status_code"] == 0, (
+        f"gNB dry-run failed:\n{gnb_dryrun_result['logs']}"
+    )
+
+
+@pytest.mark.timeout(240)
 def test_runtime_ssb_update_sends_ws_command(
     netconf_manager, load_config, o1_adapter_base_url
 ):
