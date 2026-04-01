@@ -78,6 +78,16 @@ services:
       timeout: 1s
       retries: 1      
 
+  gnb_yaml_validator:
+    image: ${GNB_DRYRUN_IMAGE:-registry.gitlab.com/ocudu/ocudu/ocudu_nightly_avx2:latest}
+    container_name: ocudu-gnb-yaml-validator
+    entrypoint: ["/bin/sh", "/opt/gnb_yaml_validator/gnb_dryrun.sh"]
+    network_mode: "none"
+    volumes:
+      - shared-data:/tmp
+      - ./mocks/gnb_yaml_validator/gnb_dryrun.sh:/opt/gnb_yaml_validator/gnb_dryrun.sh:ro
+    profiles: ["test"]
+
   o1_tests:
     image: ocudu/o1_tests:latest
     build:
@@ -88,6 +98,8 @@ services:
       netconf:
         condition: service_started
       mock_gnb:
+        condition: service_started
+      gnb_yaml_validator:
         condition: service_started
       o1_adapter:
         condition: service_healthy
@@ -102,7 +114,7 @@ services:
       MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
     volumes:
       - shared-data:/tmp
-      - ${O1_TEST_RESULTS_DIR:-./artifacts}:/opt/tests/log
+      - ${O1_TEST_RESULTS_DIR:-o1-test-results}:/opt/tests/log
     networks:
       smo:
         ipv4_address: 172.21.0.15
@@ -110,6 +122,7 @@ services:
 
 volumes:
   shared-data:
+  o1-test-results:
 
 networks:
   smo:
