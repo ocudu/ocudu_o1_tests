@@ -39,11 +39,11 @@ def _update_ssb_block_power(manager, value: int):
               <NRCellDU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcelldu">
                 <id>nrcelldu1</id>
                 <attributes>
-                  <srs_nrcelldu_extensions xmlns="urn:srsran-nrcelldu-extension:1.0">
-                    <srs_nrcelldu_ssb_extensions>
+                  <ocudu_nrcelldu_extensions xmlns="urn:ocudu-nrcelldu-extension:1.0">
+                    <ocudu_nrcelldu_ssb_extensions>
                       <ssb_block_power_dbm>{value}</ssb_block_power_dbm>
-                    </srs_nrcelldu_ssb_extensions>
-                  </srs_nrcelldu_extensions>
+                    </ocudu_nrcelldu_ssb_extensions>
+                  </ocudu_nrcelldu_extensions>
                 </attributes>
               </NRCellDU>
             </GNBDUFunction>

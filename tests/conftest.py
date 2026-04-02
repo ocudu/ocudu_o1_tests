@@ -51,7 +51,7 @@ def load_config(config_path: Path):
 @pytest.fixture(scope="session")
 def o1_adapter_base_url():
     """Return the base URL for the O1 adapter REST API."""
-    host = os.getenv("O1_ADAPTER_HOST", "srsran-o1_adapter")
+    host = os.getenv("O1_ADAPTER_HOST", "ocudu-o1-adapter")
     port = int(os.getenv("O1_ADAPTER_PORT", "5000"))
     base_url = f"http://{host}:{port}"
     session = requests.Session()
@@ -62,7 +62,7 @@ def o1_adapter_base_url():
 @pytest.fixture(scope="session")
 def netconf_manager():
     """Create a NETCONF manager connection with retries."""
-    host = os.getenv("NETCONF_HOST", "srsran-netconf")
+    host = os.getenv("NETCONF_HOST", "ocudu-netconf")
     port = int(os.getenv("NETCONF_PORT", "830"))
     username = os.getenv("NETCONF_USERNAME", "root")
     password = os.getenv("NETCONF_PASSWORD", "root")
