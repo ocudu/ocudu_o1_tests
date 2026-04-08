@@ -8,7 +8,7 @@ services:
     build:
       context: ocudu_elements/ocudu_netconf
       dockerfile: Dockerfile
-    entrypoint: ["entrypoint.sh", "--config", "cudu"]
+    entrypoint: ["entrypoint.sh", "--config", "gnb"]
     container_name: ocudu-netconf
     ports:
       # Comment to hide netconf port from outside of the docker network
