@@ -133,6 +133,7 @@ update submodule pointer:
   script:
     - |
       SUBMODULE_PATH="ocudu_elements/${O1_TESTS_UPSTREAM_COMPONENT}"
+      git -C "$SUBMODULE_PATH" remote set-url origin "https://gitlab-ci-token:${O1_INTEGRATION_TOKEN}@${CI_SERVER_HOST}/${O1_TESTS_UPSTREAM_PROJECT_PATH}.git"
       git -C "$SUBMODULE_PATH" fetch origin "$O1_TESTS_UPSTREAM_SHA"
       git -C "$SUBMODULE_PATH" checkout "$O1_TESTS_UPSTREAM_SHA"
       git add "$SUBMODULE_PATH"
