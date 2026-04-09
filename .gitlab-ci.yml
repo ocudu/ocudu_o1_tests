@@ -119,3 +119,22 @@ o1 integration tests:
     paths:
       - ${CI_JOB_ID}_xunit.xml
     expire_in: 5 days
+
+update submodule pointer:
+  stage: compose
+  image: alpine/git:latest
+  needs: ["o1 integration tests"]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $O1_TESTS_UPDATE_SUBMODULE == "true"
+  before_script:
+    - git config user.email ${O1_INTEGRATION_EMAIL}
+    - git config user.name ${O1_INTEGRATION_USERNAME}
+    - git remote set-url origin "https://gitlab-ci-token:${O1_INTEGRATION_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+  script:
+    - |
+      SUBMODULE_PATH="ocudu_elements/${O1_TESTS_UPSTREAM_COMPONENT}"
+      git -C "$SUBMODULE_PATH" fetch origin "$O1_TESTS_UPSTREAM_SHA"
+      git -C "$SUBMODULE_PATH" checkout "$O1_TESTS_UPSTREAM_SHA"
+      git add "$SUBMODULE_PATH"
+      git commit -m "git: update ${O1_TESTS_UPSTREAM_COMPONENT} submodule pointer"
+      git push origin HEAD:main
