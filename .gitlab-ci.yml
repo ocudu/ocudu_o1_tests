@@ -124,6 +124,8 @@ update submodule pointer:
   stage: compose
   image: alpine/git:latest
   needs: ["o1 integration tests"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
   rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline" && $O1_TESTS_UPDATE_SUBMODULE == "true"
   before_script:
