@@ -140,5 +140,5 @@ update submodule pointer:
       git -C "$SUBMODULE_PATH" fetch origin "$O1_TESTS_UPSTREAM_SHA"
       git -C "$SUBMODULE_PATH" checkout "$O1_TESTS_UPSTREAM_SHA"
       git add "$SUBMODULE_PATH"
-      git commit -m "git: update ${O1_TESTS_UPSTREAM_COMPONENT} submodule pointer"
+      git commit -s -m "git: update ${O1_TESTS_UPSTREAM_COMPONENT} submodule pointer"
       git push origin HEAD:ci_add_update_submodule_pointer_job
