@@ -122,14 +122,15 @@ o1 integration tests:
 
 update submodule pointer:
   stage: compose
-  image: alpine:latest
+  image:
+    name: alpine/git:latest
+    entrypoint: ["/bin/sh", "-c"]
   needs: ["o1 integration tests"]
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline" && $O1_TESTS_UPDATE_SUBMODULE == "true"
   before_script:
-    - apk add --no-cache git
     - git config user.email ${O1_INTEGRATION_EMAIL}
     - git config user.name ${O1_INTEGRATION_USERNAME}
     - git remote set-url origin "https://gitlab-ci-token:${O1_INTEGRATION_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
