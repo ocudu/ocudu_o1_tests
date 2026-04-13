@@ -10,7 +10,10 @@ OCUDU O1 Integration Tests
 
 This repository contains two git submodules which have to be initiated locally. They are in `/ocudu_elements` and point to the repos `ocudu_o1_adapter` and `ocudu_netconf` sitting in [OCUDU ORAN applications](https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps).
 
-To initiate them, from the root directory call `git submodule init` and then `git submodule update`.
+To initiate them initially after cloning this repo, call `git submodule update --init --recursive`.
+
+Thereafter, we need to explicitly keep the submodules up-to-date, even after running a local `git update` on this repo.
+To do so, call `git submodule update --recursive`.
 
 Usually they should point to the head of the two projects, but if you need them to point to another commit simply `cd` to the repo you want to change (e.g. `cd ocudu_elements/ocudu_o1_adapter`) and call `git fetch` followed by `git checkout <insert checkout hash>`. 
 
