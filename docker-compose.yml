@@ -8,11 +8,13 @@ services:
     build:
       context: ocudu_elements/ocudu_netconf
       dockerfile: Dockerfile
-    entrypoint: ["entrypoint.sh", "--config", "gnb"]
+    entrypoint: ["entrypoint.sh", "/config/default_config.xml"]
     container_name: ocudu-netconf
     ports:
       # Comment to hide netconf port from outside of the docker network
       - 830:830
+    volumes:
+      - ${NETCONF_DEFAULT_CFG:-${PWD}/ocudu_elements/ocudu_netconf/default_config.xml}:/config/default_config.xml
     networks:
       smo:
         ipv4_address: 172.21.0.14
