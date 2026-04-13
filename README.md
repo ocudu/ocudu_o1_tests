@@ -6,6 +6,9 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 OCUDU O1 Integration Tests
 ===
 
+[![Pipeline](https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_tests/badges/main/pipeline.svg)](https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_tests/-/pipelines?scope=branches)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause--Open--MPI-blue)](https://spdx.org/licenses/BSD-3-Clause-Open-MPI.html)
+
 # Checkout git submodules
 
 This repository contains two git submodules which have to be initiated locally. They are in `/ocudu_elements` and point to the repos `ocudu_o1_adapter` and `ocudu_netconf` sitting in [OCUDU ORAN applications](https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps).
@@ -58,3 +61,8 @@ docker compose -f docker-compose.smo.yml --env-file smo.env -f docker-compose.ym
 
 When launching both docker yml's you can connect to the SMO web interface as described in the section [above](#launch-minimal-smo-standalone).
 Then, to connect to the netconf server of the gNB, go to "Connect->Add Node" and add a new connection using the local IP, i.e. `172.21.0.14`. Credentials will be `root/root` by default.
+
+## License
+
+This project is licensed under the BSD 3-Clause Open MPI variant License – see the [LICENSE](./LICENSE) file for details.
+Portions of this software may implement 3GPP specifications, which may be subject to additional licensing requirements.
