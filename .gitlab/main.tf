@@ -51,6 +51,10 @@ import {
   to = module.settings.gitlab_branch_protection.protected_branches["main"]
   id = "${var.ci_project_id}:main"
 }
+import {
+  to = module.settings.gitlab_branch_protection.protected_branches["dev"]
+  id = "${var.ci_project_id}:dev"
+}
 
 module "settings" {
   source           = "git::https://${var.ocudu_path}.git//.gitlab/ci-shared/gitlab_settings?ref=${var.ocudu_ref}"
@@ -60,7 +64,7 @@ module "settings" {
   # =============================================================================
   # Basic Project Settings
   # =============================================================================
-  default_branch   = "main"
+  default_branch   = "dev"
   visibility_level = "public" # private, internal, public
 
   # =============================================================================
@@ -160,6 +164,12 @@ module "settings" {
     main = {
       allow_force_push             = false
       code_owner_approval_required = false
+      merge_access_level           = "no one"
+      push_access_level            = "maintainer"
+    }
+    dev = {
+      allow_force_push             = false
+      code_owner_approval_required = false
       merge_access_level           = "developer"
       push_access_level            = "maintainer"
     }
@@ -178,6 +188,14 @@ module "settings" {
   # Pipeline Schedules Configuration
   # =============================================================================
   schedules = {
+    nightly = {
+      description = "Nightly"
+      cron        = "00 23 * * 1-5"
+      timezone    = "Europe/Madrid"
+      ref         = "refs/heads/dev"
+      active      = true
+      variables   = {}
+    }
   }
 
 }
