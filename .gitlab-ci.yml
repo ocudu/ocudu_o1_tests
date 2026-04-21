@@ -76,14 +76,14 @@ headers:
 o1 integration tests:
   extends: .docker compose
   rules:
+    # Nightly scheduled run on dev — gates promotion of dev -> main
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
+    # Upstream-triggered pointer bump: run for signal, but do not block the bump
     - if: $CI_PIPELINE_SOURCE == "pipeline"
+      allow_failure: true
     - if: $ON_MR
       changes:
         <<: *o1_test_changes
-    - if: $ON_DEFAULT_BRANCH
-      changes:
-        <<: *o1_test_changes
-        compare_to: "$CI_COMMIT_BEFORE_SHA"
   script:
     - |
       if [ -n "${O1_TESTS_UPSTREAM_COMPONENT:-}" ]; then
@@ -125,7 +125,6 @@ update submodule pointer:
   image:
     name: alpine/git:latest
     entrypoint: ["/bin/sh", "-c"]
-  needs: ["o1 integration tests"]
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   rules:
@@ -142,4 +141,27 @@ update submodule pointer:
       git -C "$SUBMODULE_PATH" checkout "$O1_TESTS_UPSTREAM_SHA"
       git add "$SUBMODULE_PATH"
       git commit -s -m "git: update ${O1_TESTS_UPSTREAM_COMPONENT} submodule pointer"
-      git push origin HEAD:main
+      git push origin HEAD:dev
+
+################################################################################
+# post
+################################################################################
+promotion:
+  stage: .post
+  rules:
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/ && $O1_INTEGRATION_TOKEN
+  image:
+    name: alpine/git:latest
+    entrypoint: ["/bin/sh", "-c"]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - git clone https://gitlab-ci-token:${O1_INTEGRATION_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git /${CI_PROJECT_NAME}
+    - cd /${CI_PROJECT_NAME}
+    - git config user.email ${O1_INTEGRATION_EMAIL}
+    - git config user.name ${O1_INTEGRATION_USERNAME}
+    - git fetch origin main
+    - git checkout -t origin/main
+    - git rebase ${CI_COMMIT_SHA}
+    - git push
+  dependencies: []
