@@ -62,6 +62,13 @@ docker compose -f docker-compose.smo.yml --env-file smo.env -f docker-compose.ym
 When launching both docker yml's you can connect to the SMO web interface as described in the section [above](#launch-minimal-smo-standalone).
 Then, to connect to the netconf server of the gNB, go to "Connect->Add Node" and add a new connection using the local IP, i.e. `172.21.0.14`. Credentials will be `root/root` by default.
 
+# Development / CI setup
+The CI setup of this repository can be summarized in the following:
+- Merge requests will be merged into `dev`
+- Submodule pointers will be automatically updated in `dev`
+- Changes in `dev` will be pushed to `main` on a successful nightly pipeline run
+- Submodule pointers in `main` will always lead to a working reference combination of this repo, [OCUDU O1 Adapter](https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter), and [OCUDU Netconf service](https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf)
+
 ## License
 
 This project is licensed under the BSD 3-Clause Open MPI variant License – see the [LICENSE](./LICENSE) file for details.
