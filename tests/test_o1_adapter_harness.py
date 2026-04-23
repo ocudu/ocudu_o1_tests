@@ -82,12 +82,21 @@ def _update_rrm_policy_min_ratio(manager, value: int):
         target="running",
         config=f"""
         <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-          <RRMPolicyRatio xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-rrmpolicy">
-            <id>rrm_policy1</id>
-            <attributes>
-              <rRMPolicyMinRatio>{value}</rRMPolicyMinRatio>
-            </attributes>
-          </RRMPolicyRatio>
+          <ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+            <id>ran1</id>
+            <GNBDUFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbdufunction">
+              <id>du1</id>
+              <NRCellDU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcelldu">
+                <id>nrcelldu1</id>
+                <RRMPolicyRatio xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-rrmpolicy">
+                  <id>rrm_policy1</id>
+                  <attributes>
+                    <rRMPolicyMinRatio>{value}</rRMPolicyMinRatio>
+                  </attributes>
+                </RRMPolicyRatio>
+              </NRCellDU>
+            </GNBDUFunction>
+          </ManagedElement>
         </config>
         """,
     )
