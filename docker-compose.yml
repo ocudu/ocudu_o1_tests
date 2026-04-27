@@ -83,6 +83,9 @@ services:
     container_name: ocudu-gnb-yaml-validator
     entrypoint: ["/bin/sh", "/opt/gnb_yaml_validator/gnb_dryrun.sh"]
     network_mode: "none"
+    cap_add:
+      - IPC_LOCK
+      - SYS_NICE
     volumes:
       - shared-data:/tmp
       - ./mocks/gnb_yaml_validator/gnb_dryrun.sh:/opt/gnb_yaml_validator/gnb_dryrun.sh:ro
