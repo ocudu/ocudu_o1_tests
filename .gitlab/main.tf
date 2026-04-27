@@ -189,10 +189,18 @@ module "settings" {
   # =============================================================================
   schedules = {
     nightly = {
-      description = "Nightly"
+      description = "Synchronization"
       cron        = "00 23 * * 1-5"
       timezone    = "Europe/Madrid"
       ref         = "refs/heads/dev"
+      active      = true
+      variables   = {}
+    }
+    nightly_main = {
+      description = "Nightly"
+      cron        = "00 01 * * 1-5"
+      timezone    = "Europe/Madrid"
+      ref         = "refs/heads/main"
       active      = true
       variables   = {}
     }

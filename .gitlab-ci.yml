@@ -76,8 +76,8 @@ headers:
 o1 integration tests:
   extends: .docker compose
   rules:
-    # Nightly scheduled run on dev — gates promotion of dev -> main
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
+    # Synchronization nightly run on dev — gates promotion of dev -> main; additionally runs nightly on main 
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly|Synchronization/
     # Upstream-triggered pointer bump: run for signal, but do not block the bump
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       allow_failure: true
@@ -149,7 +149,7 @@ update submodule pointer:
 promotion:
   stage: .post
   rules:
-    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/ && $O1_INTEGRATION_TOKEN
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Synchronization/ && $O1_INTEGRATION_TOKEN
   image:
     name: alpine/git:latest
     entrypoint: ["/bin/sh", "-c"]
