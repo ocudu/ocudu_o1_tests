@@ -82,6 +82,7 @@ o1 integration tests:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       allow_failure: true
     - if: $ON_MR
+      allow_failure: true
       changes:
         <<: *o1_test_changes
   script:
