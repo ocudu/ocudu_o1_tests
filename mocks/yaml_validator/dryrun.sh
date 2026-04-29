@@ -5,16 +5,25 @@
 
 set -eu
 
-RESULT_FILE="/tmp/gnb-dryrun.result"
-LOG_FILE="/tmp/gnb-dryrun.log"
+RESULT_FILE="/tmp/dryrun.result"
+LOG_FILE="/tmp/dryrun.log"
 
 rm -f "$RESULT_FILE" "$LOG_FILE"
+
+case "${O1_ADAPTER_PROFILE:-}" in
+  gnb)  BIN=gnb ;;
+  cu)   BIN=ocu ;;
+  cucp) BIN=ocucp ;;
+  cuup) BIN=ocuup ;;
+  du)   BIN=odu ;;
+  *)    echo "unknown profile: ${O1_ADAPTER_PROFILE:-<unset>}" >&2; exit 1 ;;
+esac
 
 until [ -s /tmp/config.yaml ]; do
   sleep 1
 done
 
-if gnb -c /tmp/config.yaml --dryrun >"$LOG_FILE" 2>&1; then
+if "$BIN" -c /tmp/config.yaml --dryrun >"$LOG_FILE" 2>&1; then
   status=0
 else
   status=$?
