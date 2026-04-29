@@ -8,13 +8,19 @@ services:
     build:
       context: ocudu_elements/ocudu_netconf
       dockerfile: Dockerfile
-    entrypoint: ["entrypoint.sh", "/config/default_config.xml"]
+    # NETCONF_ARGS is injected by run_tests.py per run, e.g.
+    #   --config gnb
+    #   --config du --custom-config /config/default_config_1.xml
+    entrypoint: ["sh", "-c"]
+    command: ["exec /usr/local/bin/entrypoint.sh ${NETCONF_ARGS:---config gnb}"]
     container_name: ocudu-netconf
     ports:
       # Comment to hide netconf port from outside of the docker network
       - 830:830
     volumes:
-      - ${NETCONF_DEFAULT_CFG:-${PWD}/ocudu_elements/ocudu_netconf/default_config.xml}:/config/default_config.xml
+      # Per-profile configs dir mounted read-only; the bundled run ignores it,
+      # custom runs reference files via --custom-config /config/<file>.xml.
+      - ${NETCONF_CONFIGS_DIR:-${PWD}/tests/configs/gnb}:/config:ro
     networks:
       smo:
         ipv4_address: 172.21.0.14
@@ -28,7 +34,10 @@ services:
     ports:
       - 5000:5000
     tty: true
-    command: python3 ./src/o1_adapter.py --netconf_host 172.21.0.14 --ws_host ocudu-mock-gnb --ws_port 8001
+    # O1_ADAPTER_PROFILE is injected by run_tests.py per profile (gnb|cu|cucp|cuup|du).
+    entrypoint: ["sh", "-c"]
+    command:
+      - "exec python3 ./src/o1_adapter.py --netconf_host 172.21.0.14 --ws_host ocudu-mock-gnb --ws_port 8001 --profile ${O1_ADAPTER_PROFILE:-gnb}"
     healthcheck:
       test: python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/status')"
       interval: 10s
@@ -78,17 +87,19 @@ services:
       timeout: 1s
       retries: 1      
 
-  gnb_yaml_validator:
+  yaml_validator:
     image: registry.gitlab.com/ocudu/ocudu/ocudu_nightly_avx2:latest
-    container_name: ocudu-gnb-yaml-validator
-    entrypoint: ["/bin/sh", "/opt/gnb_yaml_validator/gnb_dryrun.sh"]
+    container_name: ocudu-yaml-validator
+    entrypoint: ["/bin/sh", "/opt/yaml_validator/dryrun.sh"]
     network_mode: "none"
     cap_add:
       - IPC_LOCK
       - SYS_NICE
+    environment:
+      O1_ADAPTER_PROFILE: ${O1_ADAPTER_PROFILE:-gnb}
     volumes:
       - shared-data:/tmp
-      - ./mocks/gnb_yaml_validator/gnb_dryrun.sh:/opt/gnb_yaml_validator/gnb_dryrun.sh:ro
+      - ./mocks/yaml_validator/dryrun.sh:/opt/yaml_validator/dryrun.sh:ro
     profiles: ["test"]
 
   o1_tests:
@@ -102,7 +113,7 @@ services:
         condition: service_started
       mock_gnb:
         condition: service_started
-      gnb_yaml_validator:
+      yaml_validator:
         condition: service_started
       o1_adapter:
         condition: service_healthy
@@ -115,6 +126,7 @@ services:
       O1_ADAPTER_PORT: "5000"
       CONFIG_PATH: /tmp/config.yaml
       MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
+      PYTEST_ADDOPTS: ${PYTEST_ADDOPTS:-}
     volumes:
       - shared-data:/tmp
       - ${O1_TEST_RESULTS_DIR:-o1-test-results}:/opt/tests/log
