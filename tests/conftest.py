@@ -29,6 +29,12 @@ def _wait_for(condition: Callable[[], Optional[object]], timeout: int = 120, int
     raise TimeoutError(f"Condition not met within {timeout} seconds: {last_error}")
 
 
+@pytest.fixture
+def wait_for():
+    """Expose the polling helper to test modules."""
+    return _wait_for
+
+
 @pytest.fixture(scope="session")
 def config_path() -> Path:
     """Return the path to the generated O1 adapter config file, waiting for it to appear."""
@@ -104,9 +110,9 @@ def read_ws_events(ws_event_log_path: Path):
 
 
 @pytest.fixture(scope="session")
-def gnb_dryrun_result():
-    """Return the result of the gNB YAML validator sidecar dry-run check."""
-    result_path = Path("/tmp/gnb-dryrun.result")
+def dryrun_result():
+    """Return the result of the YAML validator sidecar dry-run check."""
+    result_path = Path("/tmp/dryrun.result")
     _wait_for(
         lambda: result_path.exists() and result_path.stat().st_size > 0,
         timeout=240,
