@@ -1,0 +1,162 @@
+<!--
+SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+-->
+
+<!-- Main CU base config -->
+<ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+  <id>ran1</id>
+  <attributes>
+    <priorityLabel>1</priorityLabel>
+  </attributes>
+
+  <GNBCUCPFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbcucpfunction">
+      <id>cucp1</id>
+      <attributes>
+        <gNBId>1</gNBId>
+        <gNBIdLength>24</gNBIdLength>
+        <gNBCUName>ocuducu1</gNBCUName>
+        <pLMNId>
+          <mcc>001</mcc>
+          <mnc>01</mnc>
+        </pLMNId>
+        <priorityLabel>1</priorityLabel>
+        <qceIdMappingInfoList>
+          <idx>0</idx>
+          <qoECollectionEntityAddress>0.0.0.0</qoECollectionEntityAddress>
+          <qoECollectionEntityIdentity>unused</qoECollectionEntityIdentity>
+          <pLMNTarget>
+            <mcc>001</mcc>
+            <mnc>01</mnc>
+          </pLMNTarget>
+        </qceIdMappingInfoList>
+      </attributes>
+
+      <RRMPolicyRatio xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-rrmpolicy">
+        <id>rrm_policy1</id>
+        <attributes>
+          <resourceType>DRB</resourceType>
+          <rRMPolicyMemberList>
+            <mcc>001</mcc>
+            <mnc>01</mnc>
+            <sd>ff:ff:ff</sd>
+            <sst>1</sst>
+          </rRMPolicyMemberList>
+          <rRMPolicyMaxRatio>100</rRMPolicyMaxRatio>
+          <rRMPolicyMinRatio>0</rRMPolicyMinRatio>
+          <rRMPolicyDedicatedRatio>0</rRMPolicyDedicatedRatio>
+        </attributes>
+      </RRMPolicyRatio>
+
+      <PerfMetricJob>
+        <id>defaulttrace</id>
+        <attributes>
+          <administrativeState>UNLOCKED</administrativeState>
+          <performanceMetrics>DRB.MaxActiveUeDl</performanceMetrics>
+          <granularityPeriod>1</granularityPeriod>
+          <!--
+          <fileReportingPeriod>10</fileReportingPeriod>
+          <fileLocation>/tmp/metrics.json</fileLocation>
+          -->
+          <streamTarget>http://192.168.2.42:9560/json</streamTarget>
+        </attributes>
+      </PerfMetricJob>
+
+      <!-- No cell specific CU config required
+      <NRCellCU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellcu">
+        <id>nrcell1</id>
+        <attributes>
+         <cellLocalId>100</cellLocalId>
+           <pLMNInfoList>
+             <mcc>001</mcc>
+             <mnc>01</mnc>
+             <sd>ff:ff:ff</sd>
+             <sst>1</sst>
+           </pLMNInfoList>
+           <priorityLabel>1</priorityLabel>
+        </attributes>
+      </NRCellCU>
+      -->
+
+      <EP_NgC xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-ep">
+        <id>ngc1</id>
+        <attributes>
+          <localAddress>
+            <ipAddress>10.53.1.1</ipAddress>
+            <vlanId>0</vlanId>
+          </localAddress>
+          <remoteAddress>10.53.1.2</remoteAddress>
+        </attributes>
+      </EP_NgC>
+
+      <EP_F1C xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-ep">
+        <id>f1c1</id>
+        <attributes>
+          <!-- f1ap bind addresss -->
+          <localAddress>
+            <ipAddress>127.0.10.1</ipAddress>
+            <vlanId>0</vlanId>
+          </localAddress>
+          <!-- f1ap DU peer address -->
+          <remoteAddress>127.0.10.2</remoteAddress>
+        </attributes>
+      </EP_F1C>
+  </GNBCUCPFunction>
+
+  <GNBCUUPFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbcuupfunction">
+    <id>cuup1</id>
+    <attributes>
+      <priorityLabel>1</priorityLabel>
+      <gNBId>1</gNBId>
+      <gNBIdLength>24</gNBIdLength>
+      <pLMNInfoList>
+        <mcc>001</mcc>
+        <mnc>01</mnc>
+        <sd>ff:ff:ff</sd>
+        <sst>1</sst>
+      </pLMNInfoList>
+    </attributes>
+
+    <RRMPolicyRatio xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-rrmpolicy">
+      <id>rrm_policy1</id>
+      <attributes>
+        <resourceType>DRB</resourceType>
+        <rRMPolicyMemberList>
+          <mcc>001</mcc>
+          <mnc>01</mnc>
+          <sd>ff:ff:ff</sd>
+          <sst>1</sst>
+        </rRMPolicyMemberList>
+        <rRMPolicyMaxRatio>100</rRMPolicyMaxRatio>
+        <rRMPolicyMinRatio>0</rRMPolicyMinRatio>
+        <rRMPolicyDedicatedRatio>0</rRMPolicyDedicatedRatio>
+      </attributes>
+    </RRMPolicyRatio>
+
+    <EP_NgU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-ep">
+      <id>ngu1</id>
+      <attributes>
+        <!-- NG-U bind addresss -->
+        <localAddress>
+          <ipAddress>127.0.0.1</ipAddress>
+          <vlanId>0</vlanId>
+        </localAddress>
+        <!-- NG-U UPF peer address -->
+        <remoteAddress>127.0.0.2</remoteAddress>
+      </attributes>
+    </EP_NgU>
+
+    <EP_F1U xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-ep">
+      <id>f1u1</id>
+      <attributes>
+        <!-- f1u bind addresss -->
+        <localAddress>
+          <ipAddress>127.0.10.1</ipAddress>
+          <vlanId>0</vlanId>
+        </localAddress>
+        <!-- f1u DU peer address -->
+        <remoteAddress>127.0.10.2</remoteAddress>
+      </attributes>
+    </EP_F1U>
+  </GNBCUUPFunction>
+</ManagedElement>

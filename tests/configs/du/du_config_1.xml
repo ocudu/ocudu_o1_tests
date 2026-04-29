@@ -1,0 +1,293 @@
+<!--
+SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+-->
+
+<!-- Main DU base config -->
+<ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+  <id>ran1</id>
+  <attributes>
+    <priorityLabel>1</priorityLabel>
+  </attributes>
+
+  <GNBDUFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbdufunction">
+    <id>du1</id>
+    <attributes>
+      <gNBId>411</gNBId>
+      <gNBIdLength>23</gNBIdLength>
+      <gNBDUId>3</gNBDUId>
+      <priorityLabel>1</priorityLabel>
+    </attributes>
+    <RRMPolicyRatio xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-rrmpolicy">
+      <id>rrm_policy1</id>
+      <attributes>
+        <resourceType>PRB</resourceType>
+        <rRMPolicyMemberList>
+          <mcc>001</mcc>
+          <mnc>01</mnc>
+          <sd>ff:ff:ff</sd>
+          <sst>1</sst>
+        </rRMPolicyMemberList>
+        <rRMPolicyMaxRatio>100</rRMPolicyMaxRatio>
+        <rRMPolicyMinRatio>0</rRMPolicyMinRatio>
+        <rRMPolicyDedicatedRatio>0</rRMPolicyDedicatedRatio>
+      </attributes>
+    </RRMPolicyRatio>
+    <NRCellDU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcelldu">
+      <id>nrcelldu1</id>
+      <RRMPolicyRatio xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-rrmpolicy">
+        <id>rrm_policy1</id>
+        <attributes>
+          <resourceType>PRB</resourceType>
+          <rRMPolicyMemberList>
+            <mcc>001</mcc>
+            <mnc>01</mnc>
+            <sd>ff:ff:ff</sd>
+            <sst>1</sst>
+          </rRMPolicyMemberList>
+          <rRMPolicyMaxRatio>100</rRMPolicyMaxRatio>
+          <rRMPolicyMinRatio>0</rRMPolicyMinRatio>
+          <rRMPolicyDedicatedRatio>0</rRMPolicyDedicatedRatio>
+        </attributes>
+      </RRMPolicyRatio>
+      <attributes>
+        <priorityLabel>1</priorityLabel>
+        <cellLocalId>0</cellLocalId>
+        <administrativeState>UNLOCKED</administrativeState>
+        <pLMNInfoList>
+          <mcc>001</mcc>
+          <mnc>01</mnc>
+          <sd>ff:ff:ff</sd>
+          <sst>1</sst>
+        </pLMNInfoList>
+        <nPNIdentityList>
+          <idx>0</idx>
+          <plmnid>
+            <mcc>001</mcc>
+            <mnc>01</mnc>
+          </plmnid>
+          <cAGIdList>unused</cAGIdList>
+          <nIDList>unused</nIDList>
+        </nPNIdentityList>
+        <nRPCI>1</nRPCI>
+        <nRTAC>7</nRTAC>
+        <arfcnDL>640000</arfcnDL>
+        <arfcnUL>640000</arfcnUL>
+        <bSChannelBwDL>100</bSChannelBwDL>
+        <bSChannelBwUL>100</bSChannelBwUL>
+        <rimRSMonitoringStartTime>1970-01-01T00:00:00Z</rimRSMonitoringStartTime>
+        <rimRSMonitoringStopTime>1970-01-01T00:00:00Z</rimRSMonitoringStopTime>
+        <rimRSMonitoringWindowDuration>1</rimRSMonitoringWindowDuration>
+        <rimRSMonitoringWindowStartingOffset>0</rimRSMonitoringWindowStartingOffset>
+        <rimRSMonitoringWindowPeriodicity>24</rimRSMonitoringWindowPeriodicity>
+        <rimRSMonitoringOccasionInterval>1</rimRSMonitoringOccasionInterval>
+        <rimRSMonitoringOccasionStartingOffset>0</rimRSMonitoringOccasionStartingOffset>
+        <victimSetRef>RimRSSet=unused</victimSetRef>
+        <aggressorSetRef>RimRSSet=unused</aggressorSetRef>
+        <ssbFrequency>3000000</ssbFrequency>
+        <ssbPeriodicity>10</ssbPeriodicity>
+        <ssbSubCarrierSpacing>30</ssbSubCarrierSpacing>
+        <ssbOffset>0</ssbOffset>
+        <ssbDuration>1</ssbDuration>
+        <nRSectorCarrierRef>SCarr=not_used</nRSectorCarrierRef>
+          <ocudu_nrcelldu_extensions xmlns="urn:ocudu-nrcelldu-extension:1.0">
+            <ocudu_nrcelldu_ofh_extensions>
+              <network_interface>lo</network_interface>
+              <ru_mac_addr>00:11:22:33:44:55</ru_mac_addr>
+              <du_mac_addr>aa:bb:cc:dd:ee:ff</du_mac_addr>
+              <vlan_tag_cp>100</vlan_tag_cp>
+              <vlan_tag_up>100</vlan_tag_up>
+              <prach_port_id>[4, 5]</prach_port_id>
+              <dl_port_id>[0, 1]</dl_port_id>
+              <ul_port_id>[0, 1]</ul_port_id>
+              <enable_promiscuous>false</enable_promiscuous>
+              <check_link_status>false</check_link_status>
+              <t1a_max_cp_dl>350</t1a_max_cp_dl>
+              <t1a_min_cp_dl>200</t1a_min_cp_dl>
+              <t1a_max_cp_ul>350</t1a_max_cp_ul>
+              <t1a_min_cp_ul>200</t1a_min_cp_ul>
+              <t1a_max_up>500</t1a_max_up>
+              <t1a_min_up>0</t1a_min_up>
+              <ta4_max>500</ta4_max>
+              <ta4_min>0</ta4_min>
+              <compr_method_ul>BLOCK_FLOATING_POINT</compr_method_ul>
+              <compr_bitwidth_ul>9</compr_bitwidth_ul>
+              <compr_method_dl>BLOCK_FLOATING_POINT</compr_method_dl>
+              <compr_bitwidth_dl>9</compr_bitwidth_dl>
+              <compr_method_prach>BLOCK_FLOATING_POINT</compr_method_prach>
+              <compr_bitwidth_prach>9</compr_bitwidth_prach>
+              <enable_dl_static_compr_hdr>STATIC</enable_dl_static_compr_hdr>
+              <enable_ul_static_compr_hdr>STATIC</enable_ul_static_compr_hdr>
+              <is_prach_cp_enabled>true</is_prach_cp_enabled>
+              <ignore_ecpri_payload_size>false</ignore_ecpri_payload_size>
+              <ignore_ecpri_seq_id>false</ignore_ecpri_seq_id>
+              <iq_scaling>5.0</iq_scaling>
+            </ocudu_nrcelldu_ofh_extensions>
+            <ocudu_nrcelldu_base_extensions>
+              <nof_antennas_dl>2</nof_antennas_dl>
+              <nof_antennas_ul>2</nof_antennas_ul>
+              <common_scs>KHZ_30</common_scs>
+            </ocudu_nrcelldu_base_extensions>            
+            <ocudu_nrcelldu_ssb_extensions>
+              <ssb_block_power_dbm>-16</ssb_block_power_dbm>
+            </ocudu_nrcelldu_ssb_extensions>
+            <ocudu_nrcelldu_prach_extensions>
+              <prach_config_index>159</prach_config_index>
+              <prach_root_sequence_index>1</prach_root_sequence_index>
+            </ocudu_nrcelldu_prach_extensions>
+            <ocudu_nrcelldu_pdsch_extensions>
+              <mcs_table>qam64</mcs_table>
+            </ocudu_nrcelldu_pdsch_extensions>
+          </ocudu_nrcelldu_extensions>
+      </attributes>
+    </NRCellDU>
+
+<!--
+    <NRCellDU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcelldu">
+      <id>nrcelldu2</id>
+      <attributes>
+        <resourceType>PRB</resourceType>
+        <rRMPolicyMemberList>
+          <mcc>001</mcc>
+          <mnc>01</mnc>
+          <sd>ff:ff:ff</sd>
+          <sst>1</sst>
+        </rRMPolicyMemberList>
+        <priorityLabel>1</priorityLabel>
+        <cellLocalId>1</cellLocalId>
+        <administrativeState>UNLOCKED</administrativeState>
+        <pLMNInfoList>
+          <mcc>001</mcc>
+          <mnc>01</mnc>
+          <sd>ff:ff:ff</sd>
+          <sst>1</sst>
+        </pLMNInfoList>
+        <nRPCI>2</nRPCI>
+        <nRTAC>7</nRTAC>
+        <arfcnDL>640000</arfcnDL>
+        <arfcnUL>640000</arfcnUL>
+        <bSChannelBwDL>100</bSChannelBwDL>
+        <bSChannelBwUL>100</bSChannelBwUL>
+        <ssbFrequency>3000000</ssbFrequency>
+        <ssbPeriodicity>10</ssbPeriodicity>
+        <ssbSubCarrierSpacing>30</ssbSubCarrierSpacing>
+        <ssbOffset>0</ssbOffset>
+        <ssbDuration>1</ssbDuration>
+        <nRSectorCarrierRef>SCarr=not_used</nRSectorCarrierRef>
+          <ocudu_nrcelldu_extensions xmlns="urn:ocudu-nrcelldu-extension:1.0">
+            <ocudu_nrcelldu_ofh_extensions>
+              <network_interface>lo</network_interface>
+              <ru_mac_addr>00:11:22:33:44:55</ru_mac_addr>
+              <du_mac_addr>aa:bb:cc:dd:ee:ff</du_mac_addr>
+              <vlan_tag_cp>100</vlan_tag_cp>
+              <vlan_tag_up>100</vlan_tag_up>
+              <prach_port_id>[4, 5]</prach_port_id>
+              <dl_port_id>[0, 1]</dl_port_id>
+              <ul_port_id>[0, 1]</ul_port_id>
+              <enable_promiscuous>false</enable_promiscuous>
+              <check_link_status>false</check_link_status>
+              <t1a_max_cp_dl>350</t1a_max_cp_dl>
+              <t1a_min_cp_dl>200</t1a_min_cp_dl>
+              <t1a_max_cp_ul>350</t1a_max_cp_ul>
+              <t1a_min_cp_ul>200</t1a_min_cp_ul>
+              <t1a_max_up>500</t1a_max_up>
+              <t1a_min_up>0</t1a_min_up>
+              <ta4_max>500</ta4_max>
+              <ta4_min>0</ta4_min>
+              <compr_method_ul>BLOCK_FLOATING_POINT</compr_method_ul>
+              <compr_bitwidth_ul>9</compr_bitwidth_ul>
+              <compr_method_dl>BLOCK_FLOATING_POINT</compr_method_dl>
+              <compr_bitwidth_dl>9</compr_bitwidth_dl>
+              <compr_method_prach>BLOCK_FLOATING_POINT</compr_method_prach>
+              <compr_bitwidth_prach>9</compr_bitwidth_prach>
+              <enable_dl_static_compr_hdr>STATIC</enable_dl_static_compr_hdr>
+              <enable_ul_static_compr_hdr>STATIC</enable_ul_static_compr_hdr>
+              <is_prach_cp_enabled>true</is_prach_cp_enabled>
+              <ignore_ecpri_payload_size>false</ignore_ecpri_payload_size>
+              <ignore_ecpri_seq_id>false</ignore_ecpri_seq_id>
+              <iq_scaling>5.0</iq_scaling>
+            </ocudu_nrcelldu_ofh_extensions>
+            <ocudu_nrcelldu_base_extensions>
+              <nof_antennas_dl>2</nof_antennas_dl>
+              <nof_antennas_ul>2</nof_antennas_ul>
+              <common_scs>KHZ_30</common_scs>
+            </ocudu_nrcelldu_base_extensions>            
+            <ocudu_nrcelldu_ssb_extensions>
+              <ssb_block_power_dbm>-16</ssb_block_power_dbm>
+            </ocudu_nrcelldu_ssb_extensions>
+            <ocudu_nrcelldu_prach_extensions>
+              <prach_root_sequence_index>1</prach_root_sequence_index>
+            </ocudu_nrcelldu_prach_extensions>
+          </ocudu_nrcelldu_extensions>
+      </attributes>
+    </NRCellDU>
+    -->
+
+    <EP_F1C xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-ep">
+      <id>f1c1</id>
+      <attributes>
+        <!-- f1c bind addresss -->
+        <localAddress>  
+          <ipAddress>10.11.12.112</ipAddress>
+          <vlanId>100</vlanId>
+        </localAddress>
+        <!-- f1c connect ip4v/ipv6 address -->
+        <remoteAddress>10.11.12.113</remoteAddress>
+      </attributes>
+    </EP_F1C>
+    <EP_F1U xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-ep">
+      <id>f1u1</id>
+      <attributes>
+        <!-- f1u bind addresss -->
+        <localAddress>
+          <ipAddress>10.11.13.112</ipAddress>
+          <vlanId>101</vlanId>
+        </localAddress>
+        <!-- f1u connect ip4v/ipv6 address -->
+        <remoteAddress>10.11.13.113</remoteAddress>
+      </attributes>
+    </EP_F1U>
+
+    <ocudu_gnbdufunction_extensions xmlns="urn:ocudu-gnbdufunction-extension:1.0">
+      <ocudu_gnbdufunction_testmode_extensions>
+        <enabled>true</enabled>
+        <rnti>44</rnti>
+        <ri>1</ri>
+        <cqi>15</cqi>
+        <nof_ues>1</nof_ues>
+        <pdsch_active>true</pdsch_active>
+        <pusch_active>true</pusch_active>
+      </ocudu_gnbdufunction_testmode_extensions>
+      <ocudu_gnbdufunction_log_extensions>
+        <filename>/tmp/gnb.log</filename>
+        <all_level>warning</all_level>
+      </ocudu_gnbdufunction_log_extensions>
+      <ocudu_hal_extensions>
+        <eal_args>--lcores (0-1)@(0-11)</eal_args>
+      </ocudu_hal_extensions>
+
+      <ocudu_remote_control_extensions>
+        <enabled>true</enabled>
+        <bind_addr>0.0.0.0</bind_addr>
+      </ocudu_remote_control_extensions>
+
+      <ocudu_metrics_extensions>
+        <autostart_stdout_metrics>true</autostart_stdout_metrics>
+        <enable_json>false</enable_json>
+        <enable_log>true</enable_log>
+        <periodicity>
+          <du_report_period>1000</du_report_period>
+        </periodicity>
+        <layers>
+          <enable_ru>true</enable_ru>
+          <enable_sched>true</enable_sched>
+          <enable_rlc>false</enable_rlc>
+          <enable_mac>false</enable_mac>
+          <enable_du_low>false</enable_du_low>
+        </layers>
+      </ocudu_metrics_extensions>
+
+    </ocudu_gnbdufunction_extensions>
+
+  </GNBDUFunction>
+</ManagedElement>
