@@ -30,9 +30,13 @@ $ docker compose --profile test up --build
 
 # Launch self-contained integration tests for CI purposes
 
+`run_tests.py` takes a netconf profile and runs the matching `tests/test_o1_adapter_<profile>.py` suite. Valid profiles are `gnb`, `cu`, `cucp`, `cuup`, and `du`.
+
 ```bash
-$ ./run_tests.py
+$ ./run_tests.py <profile>
 ```
+
+For each profile the suite runs once with the bundled config baked into the netconf image, then once per custom XML under `tests/configs/<profile>/`.
 
 
 # Launch OCUDU O1 containers standalone
