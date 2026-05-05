@@ -28,7 +28,9 @@ This launches the tests but keeps the containers running even after the test cas
 $ docker compose --profile test up --build
 ```
 
-# Launch self-contained integration tests for CI purposes
+This manual path only covers the `gnb` profile against the bundled netconf config. The other profiles (`cu`, `cucp`, `cuup`, `du`) and the per-profile custom XMLs under `tests/configs/<profile>/` require `run_tests.py` (see below), which sets `O1_ADAPTER_PROFILE`, `NETCONF_ARGS`, and `PYTEST_ADDOPTS` per iteration.
+
+# Launch automated self-contained integration tests
 
 `run_tests.py` takes a netconf profile and runs the matching `tests/test_o1_adapter_<profile>.py` suite. Valid profiles are `gnb`, `cu`, `cucp`, `cuup`, and `du`.
 
@@ -37,6 +39,15 @@ $ ./run_tests.py <profile>
 ```
 
 For each profile the suite runs once with the bundled config baked into the netconf image, then once per custom XML under `tests/configs/<profile>/`.
+
+To inspect the JUnit XML reports after the run, set `O1_TEST_RESULTS_DIR` to a host path before invoking the script. Without it, results are written to a docker volume that gets wiped by the `down --volumes` between iterations.
+
+```bash
+$ mkdir -p log
+$ O1_TEST_RESULTS_DIR=$PWD/log ./run_tests.py <profile>
+```
+
+After the run, `log/` contains one `out_<profile>_<label>.xml` per iteration plus a merged `out.xml`.
 
 
 # Launch OCUDU O1 containers standalone
