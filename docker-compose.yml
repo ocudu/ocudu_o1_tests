@@ -126,7 +126,7 @@ services:
       O1_ADAPTER_PORT: "5000"
       CONFIG_PATH: /tmp/config.yaml
       MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
-      PYTEST_ADDOPTS: ${PYTEST_ADDOPTS:-}
+      PYTEST_ADDOPTS: ${PYTEST_ADDOPTS:--vv test_o1_adapter_gnb.py}
     volumes:
       - shared-data:/tmp
       - ${O1_TEST_RESULTS_DIR:-o1-test-results}:/opt/tests/log
