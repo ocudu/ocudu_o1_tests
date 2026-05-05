@@ -13,6 +13,17 @@ import yaml
 from ncclient import manager
 
 
+def pytest_collection_modifyitems(items):
+    """Record all markers as JUnit XML properties."""
+    for item in items:
+        markers = []
+        for marker in item.iter_markers():
+            if marker.name in ("parametrize", "skip", "skipif", "xfail", "usefixtures", "filterwarnings", "timeout"):
+                continue
+            markers.append(marker.name)
+        item.user_properties.append(("markers", ";".join(markers)))
+
+
 def _wait_for(condition: Callable[[], Optional[object]], timeout: int = 120, interval: float = 1.0):
     """Wait until condition returns a truthy value or timeout expires."""
     deadline = time.time() + timeout

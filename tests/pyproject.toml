@@ -11,3 +11,6 @@ addopts = [
 ]
 testpaths = ["."]
 junit_logging = "all"
+markers = [
+  "MVP-ARCH-INTF-5",
+]
