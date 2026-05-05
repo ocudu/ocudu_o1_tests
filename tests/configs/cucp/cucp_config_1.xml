@@ -114,5 +114,49 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <remoteAddress>127.0.10.2</remoteAddress>
         </attributes>
       </EP_F1C>
+
+      <ocudu_gnbcucpfunction_extensions xmlns="urn:ocudu-gnbcucpfunction-extension:1.0">
+        <ocudu_log_extensions>
+          <filename>/tmp/cucp.log</filename>
+          <all_level>warning</all_level>
+        </ocudu_log_extensions>
+
+        <ocudu_metrics_extensions>
+          <enable_json>false</enable_json>
+          <enable_log>true</enable_log>
+          <periodicity>
+            <cu_cp_report_period>1000</cu_cp_report_period>
+          </periodicity>
+          <layers>
+            <enable_rrc>true</enable_rrc>
+            <enable_ngap>true</enable_ngap>
+          </layers>
+        </ocudu_metrics_extensions>
+
+        <ocudu_pcap_extensions>
+          <ngap>
+            <filename>/tmp/cucp_ngap.pcap</filename>
+            <enable>false</enable>
+          </ngap>
+          <xnap>
+            <filename>/tmp/cucp_xnap.pcap</filename>
+            <enable>false</enable>
+          </xnap>
+          <e2ap_cu_cp>
+            <filename>/tmp/cucp_e2ap.pcap</filename>
+          </e2ap_cu_cp>
+          <e2ap>
+            <enable>false</enable>
+          </e2ap>
+          <f1ap>
+            <filename>/tmp/cucp_f1ap.pcap</filename>
+            <enable>false</enable>
+          </f1ap>
+          <e1ap>
+            <filename>/tmp/cucp_e1ap.pcap</filename>
+            <enable>false</enable>
+          </e1ap>
+        </ocudu_pcap_extensions>
+      </ocudu_gnbcucpfunction_extensions>
   </GNBCUCPFunction>
 </ManagedElement>

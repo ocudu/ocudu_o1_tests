@@ -90,6 +90,23 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
         </attributes>
       </EP_NgC>
 
+      <ocudu_gnbcucpfunction_extensions xmlns="urn:ocudu-gnbcucpfunction-extension:1.0">
+        <ocudu_pcap_extensions>
+          <ngap>
+            <filename>/tmp/gnb_ngap.pcap</filename>
+            <enable>false</enable>
+          </ngap>
+          <xnap>
+            <filename>/tmp/gnb_xnap.pcap</filename>
+            <enable>false</enable>
+          </xnap>
+          <e1ap>
+            <filename>/tmp/gnb_e1ap.pcap</filename>
+            <enable>false</enable>
+          </e1ap>
+        </ocudu_pcap_extensions>
+      </ocudu_gnbcucpfunction_extensions>
+
   </GNBCUCPFunction>
   
   <GNBCUUPFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbcuupfunction">
@@ -121,6 +138,15 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
         <rRMPolicyDedicatedRatio>0</rRMPolicyDedicatedRatio>
       </attributes>
     </RRMPolicyRatio>
+
+    <ocudu_gnbcuupfunction_extensions xmlns="urn:ocudu-gnbcuupfunction-extension:1.0">
+      <ocudu_pcap_extensions>
+        <n3>
+          <filename>/tmp/gnb_n3.pcap</filename>
+          <enable>false</enable>
+        </n3>
+      </ocudu_pcap_extensions>
+    </ocudu_gnbcuupfunction_extensions>
   </GNBCUUPFunction>
   
   <GNBDUFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbdufunction">
@@ -371,10 +397,10 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
         <pdsch_active>true</pdsch_active>
         <pusch_active>true</pusch_active>
       </ocudu_gnbdufunction_testmode_extensions>
-      <ocudu_gnbdufunction_log_extensions>
+      <ocudu_log_extensions>
         <filename>/tmp/gnb.log</filename>
         <all_level>warning</all_level>
-      </ocudu_gnbdufunction_log_extensions>
+      </ocudu_log_extensions>
       <ocudu_hal_extensions>
         <eal_args>--lcores (0-1)@(0-11)</eal_args>
       </ocudu_hal_extensions>
@@ -402,6 +428,33 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <enable_du_low>false</enable_du_low>
         </layers>
       </ocudu_metrics_extensions>
+
+      <ocudu_pcap_extensions>
+        <rlc>
+          <filename>/tmp/gnb_rlc.pcap</filename>
+          <rb_type>all</rb_type>
+          <enable>false</enable>
+        </rlc>
+        <mac>
+          <filename>/tmp/gnb_mac.pcap</filename>
+          <type>udp</type>
+          <enable>false</enable>
+        </mac>
+        <f1ap>
+          <filename>/tmp/gnb_f1ap.pcap</filename>
+          <enable>false</enable>
+        </f1ap>
+        <f1u>
+          <filename>/tmp/gnb_f1u.pcap</filename>
+          <enable>false</enable>
+        </f1u>
+        <e2ap_du>
+          <filename>/tmp/gnb_e2ap.pcap</filename>
+        </e2ap_du>
+        <e2ap>
+          <enable>false</enable>
+        </e2ap>
+      </ocudu_pcap_extensions>
 
     </ocudu_gnbdufunction_extensions>
 

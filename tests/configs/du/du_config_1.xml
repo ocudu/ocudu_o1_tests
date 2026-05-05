@@ -258,10 +258,10 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
         <pdsch_active>true</pdsch_active>
         <pusch_active>true</pusch_active>
       </ocudu_gnbdufunction_testmode_extensions>
-      <ocudu_gnbdufunction_log_extensions>
-        <filename>/tmp/gnb.log</filename>
+      <ocudu_log_extensions>
+        <filename>/tmp/du.log</filename>
         <all_level>warning</all_level>
-      </ocudu_gnbdufunction_log_extensions>
+      </ocudu_log_extensions>
       <ocudu_hal_extensions>
         <eal_args>--lcores (0-1)@(0-11)</eal_args>
       </ocudu_hal_extensions>
@@ -286,6 +286,33 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <enable_du_low>false</enable_du_low>
         </layers>
       </ocudu_metrics_extensions>
+
+      <ocudu_pcap_extensions>
+        <rlc>
+          <filename>/tmp/du_rlc.pcap</filename>
+          <rb_type>all</rb_type>
+          <enable>false</enable>
+        </rlc>
+        <mac>
+          <filename>/tmp/du_mac.pcap</filename>
+          <type>udp</type>
+          <enable>false</enable>
+        </mac>
+        <f1ap>
+          <filename>/tmp/du_f1ap.pcap</filename>
+          <enable>false</enable>
+        </f1ap>
+        <f1u>
+          <filename>/tmp/du_f1u.pcap</filename>
+          <enable>false</enable>
+        </f1u>
+        <e2ap_du>
+          <filename>/tmp/du_e2ap.pcap</filename>
+        </e2ap_du>
+        <e2ap>
+          <enable>false</enable>
+        </e2ap>
+      </ocudu_pcap_extensions>
 
     </ocudu_gnbdufunction_extensions>
 

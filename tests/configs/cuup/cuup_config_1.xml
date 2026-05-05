@@ -78,5 +78,45 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
         <remoteAddress>127.0.10.2</remoteAddress>
       </attributes>
     </EP_F1U>
+
+    <ocudu_gnbcuupfunction_extensions xmlns="urn:ocudu-gnbcuupfunction-extension:1.0">
+      <ocudu_log_extensions>
+        <filename>/tmp/cuup.log</filename>
+        <all_level>warning</all_level>
+      </ocudu_log_extensions>
+
+      <ocudu_metrics_extensions>
+        <enable_json>false</enable_json>
+        <enable_log>true</enable_log>
+        <periodicity>
+          <cu_up_report_period>1000</cu_up_report_period>
+        </periodicity>
+        <layers>
+          <enable_pdcp>true</enable_pdcp>
+          <enable_e1ap>true</enable_e1ap>
+        </layers>
+      </ocudu_metrics_extensions>
+
+      <ocudu_pcap_extensions>
+        <n3>
+          <filename>/tmp/cuup_n3.pcap</filename>
+          <enable>false</enable>
+        </n3>
+        <e2ap_cu_up>
+          <filename>/tmp/cuup_e2ap.pcap</filename>
+        </e2ap_cu_up>
+        <e2ap>
+          <enable>false</enable>
+        </e2ap>
+        <e1ap>
+          <filename>/tmp/cuup_e1ap.pcap</filename>
+          <enable>false</enable>
+        </e1ap>
+        <f1u>
+          <filename>/tmp/cuup_f1u.pcap</filename>
+          <enable>false</enable>
+        </f1u>
+      </ocudu_pcap_extensions>
+    </ocudu_gnbcuupfunction_extensions>
   </GNBCUUPFunction>
 </ManagedElement>
