@@ -22,6 +22,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 PROFILES = ("gnb", "cu", "cucp", "cuup", "du")
 
@@ -97,7 +98,9 @@ def main() -> int:
             env["NETCONF_ARGS"] = f"--config {profile} --custom-config /config/{cfg.name}"
         env["CURRENT_CONFIG_NAME"] = label
         env["PYTEST_ADDOPTS"] = (
-            f"--junitxml=./log/out_{profile}_{label}.xml test_o1_adapter_{profile}.py"
+            f"--junitxml=./log/out_{profile}_{label}.xml "
+            f"-o junit_suite_name={profile}-{label} "
+            f"test_o1_adapter_{profile}.py"
         )
 
         up_proc = subprocess.run(up_cmd, cwd=compose_dir, check=False, env=env)
@@ -112,7 +115,25 @@ def main() -> int:
         status = "PASS" if rc == 0 else f"FAIL (exit {rc})"
         print(f"  {name}: {status}")
 
+    results_dir = os.environ.get("O1_TEST_RESULTS_DIR")
+    if results_dir:
+        merge_junit_reports(Path(results_dir), profile)
+
     return overall_rc
+
+
+def merge_junit_reports(out_dir: Path, profile: str) -> None:
+    paths = sorted(out_dir.glob(f"out_{profile}_*.xml"))
+    if not paths:
+        return
+    merged = ET.Element("testsuites")
+    for p in paths:
+        root = ET.parse(p).getroot()
+        suites = root.findall("testsuite") if root.tag == "testsuites" else [root]
+        merged.extend(suites)
+    ET.ElementTree(merged).write(
+        out_dir / "out.xml", xml_declaration=True, encoding="utf-8"
+    )
 
 
 if __name__ == "__main__":
