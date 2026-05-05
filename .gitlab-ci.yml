@@ -75,6 +75,9 @@ headers:
 
 o1 integration tests:
   extends: .docker compose
+  parallel:
+    matrix:
+      - PROFILE: [gnb, cu, cucp, cuup, du]
   rules:
     # Synchronization nightly run on dev — gates promotion of dev -> main; additionally runs nightly on main 
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly|Synchronization/
@@ -110,7 +113,7 @@ o1 integration tests:
       fi
     - mkdir -p artifacts
     - export O1_TEST_RESULTS_DIR="${CI_PROJECT_DIR}/artifacts"
-    - python3 run_tests.py
+    - python3 run_tests.py "$PROFILE"
   after_script:
     - mv "${CI_PROJECT_DIR}/artifacts/out.xml" "${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml" || true
   artifacts:
