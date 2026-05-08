@@ -17,10 +17,15 @@ services:
     ports:
       # Comment to hide netconf port from outside of the docker network
       - 830:830
+      - 6513:6513
     volumes:
       # Per-profile configs dir mounted read-only; the bundled run ignores it,
       # custom runs reference files via --custom-config /config/<file>.xml.
       - ${NETCONF_CONFIGS_DIR:-${PWD}/tests/configs/gnb}:/config:ro
+      # Named volume for TLS material. With --enable-tls, setup_tls.sh self-signs
+      # a CA + server + client cert into here on first start (if empty); production
+      # deployments override this mount with their own ca.crt/server.{crt,key}.
+      - tls-certs:/etc/netconf-tls
     networks:
       smo:
         ipv4_address: 172.21.0.14
@@ -122,6 +127,8 @@ services:
       NETCONF_PORT: "830"
       NETCONF_USERNAME: root
       NETCONF_PASSWORD: root
+      NETCONF_TLS_PORT: "6513"
+      NETCONF_TLS_CERT_DIR: /etc/netconf-tls-client
       O1_ADAPTER_HOST: ocudu-o1-adapter
       O1_ADAPTER_PORT: "5000"
       CONFIG_PATH: /tmp/config.yaml
@@ -130,6 +137,9 @@ services:
     volumes:
       - shared-data:/tmp
       - ${O1_TEST_RESULTS_DIR:-o1-test-results}:/opt/tests/log
+      # Read the netconf container's self-signed CA + client cert/key out of the
+      # same named volume; the test fixture connects via mTLS using these.
+      - tls-certs:/etc/netconf-tls-client:ro
     networks:
       smo:
         ipv4_address: 172.21.0.15
@@ -138,6 +148,7 @@ services:
 volumes:
   shared-data:
   o1-test-results:
+  tls-certs:
 
 networks:
   smo:
