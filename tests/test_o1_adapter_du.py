@@ -187,6 +187,15 @@ def test_non_runtime_change_triggers_restart_request(
         )
 
 
+@getattr(mark, "MVP-SEC-O-DU-03a")
+@mark.timeout(60)
+def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
+    """Connect over mutual TLS and verify the running config is fetchable."""
+    reply = tls_netconf_manager.get_config(source="running")
+    xml = reply.data_xml
+    assert xml and "<" in xml
+
+
 @getattr(mark, "MVP-ARCH-INTF-5")
 @mark.timeout(240)
 def test_rrm_policy_ratio_update_sends_ws_command(

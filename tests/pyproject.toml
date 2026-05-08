@@ -13,4 +13,7 @@ testpaths = ["."]
 junit_logging = "all"
 markers = [
   "MVP-ARCH-INTF-5",
+  "MVP-SEC-O-CU-05",
+  "MVP-SEC-O-CU-07",
+  "MVP-SEC-O-DU-03a",
 ]

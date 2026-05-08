@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 from pathlib import Path
+from pytest import mark
 
-import pytest
 import requests
 
 
@@ -83,7 +83,7 @@ def _update_rrm_policy_min_ratio(manager, value: int):
     )
 
 
-@pytest.mark.timeout(180)
+@mark.timeout(180)
 def test_initial_configuration_written(config_path: Path, load_config):
     """Ensure the adapter writes the initial configuration file."""
     config = load_config()
@@ -94,7 +94,7 @@ def test_initial_configuration_written(config_path: Path, load_config):
     assert "ssb_block_power_dbm" in first_cell["ssb"], "ssb block power missing"
 
 
-@pytest.mark.timeout(240)
+@mark.timeout(240)
 def test_rendered_configuration_accepts_dryrun(dryrun_result):
     """Ensure the rendered config can be loaded by the component in dry-run mode."""
     assert dryrun_result["status_code"] == 0, (
@@ -102,7 +102,15 @@ def test_rendered_configuration_accepts_dryrun(dryrun_result):
     )
 
 
-@pytest.mark.timeout(240)
+@mark.timeout(60)
+def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
+    """Connect over mutual TLS and verify the running config is fetchable."""
+    reply = tls_netconf_manager.get_config(source="running")
+    xml = reply.data_xml
+    assert xml and "<" in xml
+
+
+@mark.timeout(240)
 def test_runtime_ssb_update_sends_ws_command(
     netconf_manager, load_config, o1_adapter_base_url, wait_for
 ):
@@ -136,7 +144,7 @@ def test_runtime_ssb_update_sends_ws_command(
             )
 
 
-@pytest.mark.timeout(240)
+@mark.timeout(240)
 def test_non_runtime_change_triggers_restart_request(
     netconf_manager, load_config, o1_adapter_base_url, wait_for
 ):
@@ -183,7 +191,7 @@ def test_non_runtime_change_triggers_restart_request(
         )
 
 
-@pytest.mark.timeout(240)
+@mark.timeout(240)
 def test_rrm_policy_ratio_update_sends_ws_command(
     netconf_manager,
     load_config,
