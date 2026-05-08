@@ -3,6 +3,7 @@
 
 import json
 import os
+import ssl
 import time
 from pathlib import Path
 from typing import Callable, Optional
@@ -94,6 +95,29 @@ def netconf_manager():
             allow_agent=False,
             look_for_keys=False,
             timeout=10,
+        )
+
+    conn = _wait_for(_connect, timeout=120)
+    yield conn
+    conn.close_session()
+
+
+@pytest.fixture(scope="session")
+def tls_netconf_manager():
+    """Connect to the netopeer2 TLS endpoint with the test client cert."""
+    cert_dir = Path(os.getenv("NETCONF_TLS_CERT_DIR", "/etc/netconf-tls-client"))
+    host = os.getenv("NETCONF_HOST", "ocudu-netconf")
+    port = int(os.getenv("NETCONF_TLS_PORT", "6513"))
+
+    def _connect():
+        return manager.connect_tls(
+            host=host,
+            port=port,
+            keyfile=str(cert_dir / "client.key"),
+            certfile=str(cert_dir / "client.crt"),
+            ca_certs=str(cert_dir / "ca.crt"),
+            protocol=ssl.PROTOCOL_TLS_CLIENT,
+            check_hostname=False,
         )
 
     conn = _wait_for(_connect, timeout=120)
