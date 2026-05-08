@@ -92,10 +92,11 @@ def main() -> int:
         print("=" * len(banner), flush=True)
 
         env = base_env.copy()
-        if cfg is None:
-            env["NETCONF_ARGS"] = f"--config {profile}"
-        else:
-            env["NETCONF_ARGS"] = f"--config {profile} --custom-config /config/{cfg.name}"
+        netconf_args = f"--config {profile}"
+        if cfg is not None:
+            netconf_args += f" --custom-config /config/{cfg.name}"
+        netconf_args += " --enable-tls"
+        env["NETCONF_ARGS"] = netconf_args
         env["CURRENT_CONFIG_NAME"] = label
         env["PYTEST_ADDOPTS"] = (
             f"--junitxml=./log/out_{profile}_{label}.xml "
