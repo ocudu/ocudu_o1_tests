@@ -12,6 +12,7 @@ import pytest
 import requests
 import yaml
 from ncclient import manager
+from ncclient.transport.errors import TransportError
 
 
 def pytest_collection_modifyitems(items):
@@ -99,7 +100,10 @@ def netconf_manager():
 
     conn = _wait_for(_connect, timeout=120)
     yield conn
-    conn.close_session()
+    try:
+        conn.close_session()
+    except TransportError:
+        pass
 
 
 @pytest.fixture(scope="session")
@@ -122,7 +126,10 @@ def tls_netconf_manager():
 
     conn = _wait_for(_connect, timeout=120)
     yield conn
-    conn.close_session()
+    try:
+        conn.close_session()
+    except TransportError:
+        pass
 
 
 @pytest.fixture(scope="session")
