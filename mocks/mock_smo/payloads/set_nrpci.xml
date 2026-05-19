@@ -1,0 +1,19 @@
+<!--
+SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+-->
+
+<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+    <id>ran1</id>
+    <GNBDUFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbdufunction">
+      <id>du1</id>
+      <NRCellDU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcelldu">
+        <id>nrcelldu1</id>
+        <attributes>
+          <nRPCI>200</nRPCI>
+        </attributes>
+      </NRCellDU>
+    </GNBDUFunction>
+  </ManagedElement>
+</config>

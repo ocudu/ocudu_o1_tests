@@ -1,0 +1,19 @@
+<!--
+SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+-->
+
+<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+    <id>ran1</id>
+    <GNBCUCPFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbcucpfunction">
+      <id>cucp1</id>
+      <ocudu_gnbcucpfunction_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+        <report_configs>
+          <report_cfg_id>3</report_cfg_id>
+          <meas_trigger_quantity_threshold_db>-20</meas_trigger_quantity_threshold_db>
+        </report_configs>
+      </ocudu_gnbcucpfunction_mobility_extensions>
+    </GNBCUCPFunction>
+  </ManagedElement>
+</config>

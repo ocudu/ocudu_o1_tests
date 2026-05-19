@@ -70,6 +70,8 @@ services:
         condition: service_started
       mock_gnb:
         condition: service_started
+      mock_smo:
+        condition: service_started
     environment:
       WS_HOST: ${O1_ADAPTER_WS_HOST:-ocudu-mock-gnb}
       WS_PORT: ${O1_ADAPTER_WS_PORT:-8001}
@@ -107,7 +109,33 @@ services:
       test: python -c "import urllib.request; urllib.request.urlopen('http://172.21.0.13:5000/config-healthy')"
       interval: 10s
       timeout: 1s
-      retries: 1      
+      retries: 1
+
+  mock_smo:
+    image: ocudu/mock-smo:latest
+    build:
+      context: ./mocks/mock_smo
+      dockerfile: Dockerfile
+    container_name: ocudu-mock-smo
+    environment:
+      MOCK_SMO_PORT: "9560"
+      MOCK_SMO_EVENT_LOG: /tmp/mock_smo_events.jsonl
+      MOCK_SMO_TRIGGER_AFTER: ${MOCK_SMO_TRIGGER_AFTER:-3}
+      MOCK_SMO_EDIT_PAYLOAD_FILE: ${MOCK_SMO_EDIT_PAYLOAD_FILE:-}
+      MOCK_SMO_LOGLEVEL: INFO
+      NETCONF_HOST: ocudu-netconf
+      NETCONF_PORT: "830"
+      NETCONF_USERNAME: root
+      NETCONF_PASSWORD: root
+    depends_on:
+      netconf:
+        condition: service_started
+    networks:
+      smo:
+        ipv4_address: 172.21.0.17
+    profiles: ["test", "dev"]
+    volumes:
+      - shared-data:/tmp
 
   yaml_validator:
     image: registry.gitlab.com/ocudu/ocudu/ocudu_nightly_avx2:latest
@@ -141,6 +169,8 @@ services:
         condition: service_started
       o1_adapter:
         condition: service_healthy
+      mock_smo:
+        condition: service_started
     environment:
       NETCONF_HOST: ocudu-netconf
       NETCONF_PORT: "830"
@@ -156,6 +186,7 @@ services:
       O1_ADAPTER_PORT: "5000"
       CONFIG_PATH: /tmp/config.yaml
       MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
+      MOCK_SMO_EVENT_LOG: /tmp/mock_smo_events.jsonl
       PYTEST_ADDOPTS: ${PYTEST_ADDOPTS:--vv test_o1_adapter_gnb.py}
     volumes:
       - shared-data:/tmp
