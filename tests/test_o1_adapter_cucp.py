@@ -4,7 +4,7 @@
 from pathlib import Path
 from pytest import mark
 
-
+@getattr(mark, "MVP-ARCH-INTF-8")
 @mark.timeout(180)
 def test_initial_configuration_written(config_path: Path, load_config):
     """Ensure the adapter writes the initial CU-CP configuration file."""
@@ -14,7 +14,7 @@ def test_initial_configuration_written(config_path: Path, load_config):
     assert "e1ap" in config["cu_cp"], "e1ap section missing under cu_cp"
     assert "f1ap" in config["cu_cp"], "f1ap section missing under cu_cp"
 
-
+@getattr(mark, "MVP-ARCH-INTF-8")
 @mark.timeout(240)
 def test_rendered_configuration_accepts_dryrun(dryrun_result):
     """Ensure the rendered config can be loaded by the component in dry-run mode."""
@@ -22,7 +22,7 @@ def test_rendered_configuration_accepts_dryrun(dryrun_result):
         f"dry-run failed:\n{dryrun_result['logs']}"
     )
 
-
+@getattr(mark, "MVP-ARCH-INTF-8")
 @getattr(mark, "MVP-SEC-O-CU-05")
 @mark.timeout(60)
 def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
