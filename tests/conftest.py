@@ -186,17 +186,182 @@ def ws_event_log_path() -> Path:
     return Path(os.getenv("MOCK_GNB_EVENT_LOG", "/tmp/mock_gnb_events.jsonl"))
 
 
+def _read_jsonl(path: Path) -> list:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8") as handle:
+        return [json.loads(line) for line in handle if line.strip()]
+
+
 @pytest.fixture()
 def read_ws_events(ws_event_log_path: Path):
     """Provide a callable that loads all WebSocket events emitted so far."""
+    return lambda: _read_jsonl(ws_event_log_path)
 
-    def _reader():
-        if not ws_event_log_path.exists():
-            return []
-        with ws_event_log_path.open("r", encoding="utf-8") as handle:
-            return [json.loads(line) for line in handle if line.strip()]
 
-    return _reader
+@pytest.fixture(scope="session")
+def mock_smo_event_log_path() -> Path:
+    """Path used by the mock SMO to persist received PM envelopes + closed-loop actions."""
+    return Path(os.getenv("MOCK_SMO_EVENT_LOG", "/tmp/mock_smo_events.jsonl"))
+
+
+@pytest.fixture(scope="session")
+def mock_smo_base_url() -> str:
+    """Base URL for the mock SMO HTTP control surface."""
+    host = os.getenv("MOCK_SMO_HOST", "ocudu-mock-smo")
+    port = int(os.getenv("MOCK_SMO_PORT", "9560"))
+    return f"http://{host}:{port}"
+
+
+@pytest.fixture()
+def configure_mock_smo(mock_smo_base_url):
+    """Return a callable that swaps the SMO's trigger payload and (by default) clears its event log."""
+
+    def _configure(payload_file: str, clear_log: bool = True) -> None:
+        resp = requests.post(
+            f"{mock_smo_base_url}/configure",
+            json={"payload_file": payload_file, "clear_log": clear_log},
+            timeout=5,
+        )
+        resp.raise_for_status()
+
+    return _configure
+
+
+@pytest.fixture()
+def read_smo_events(mock_smo_event_log_path: Path):
+    """Provide a callable that loads all mock SMO event log entries written so far."""
+    return lambda: _read_jsonl(mock_smo_event_log_path)
+
+
+_NF_FUNCTION_NS = {
+    "GNBCUCPFunction": "urn:3gpp:sa5:_3gpp-nr-nrm-gnbcucpfunction",
+    "GNBDUFunction": "urn:3gpp:sa5:_3gpp-nr-nrm-gnbdufunction",
+}
+
+
+@pytest.fixture()
+def set_pm_admin_state():
+    """Return a callable that flips PerfMetricJob[id=defaulttrace] administrativeState via NETCONF."""
+
+    def _set(manager, nf_function: str, function_id: str, state: str):
+        manager.edit_config(
+            target="running",
+            config=f"""
+            <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+              <ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+                <id>ran1</id>
+                <{nf_function} xmlns="{_NF_FUNCTION_NS[nf_function]}">
+                  <id>{function_id}</id>
+                  <PerfMetricJob>
+                    <id>defaulttrace</id>
+                    <attributes>
+                      <administrativeState>{state}</administrativeState>
+                    </attributes>
+                  </PerfMetricJob>
+                </{nf_function}>
+              </ManagedElement>
+            </config>
+            """,
+        )
+
+    return _set
+
+
+@pytest.fixture()
+def wait_for_metric_envelopes(read_smo_events, wait_for):
+    """Return a callable that polls the mock SMO log until `min_count` metric envelopes arrive."""
+
+    def _wait(min_count: int = 3, timeout: int = 90) -> list[dict]:
+        def _have_enough():
+            evts = [e for e in read_smo_events() if isinstance(e, dict) and "metrics" in e]
+            return evts if len(evts) >= min_count else None
+
+        return wait_for(_have_enough, timeout=timeout)
+
+    return _wait
+
+
+@pytest.fixture()
+def pm_envelope_shape():
+    """Assert a PM JSON envelope conforms to the agreed schema."""
+
+    def _assert(envelope: dict, expected_nf_type: str):
+        assert envelope.get("nfType") == expected_nf_type, (
+            f"nfType {envelope.get('nfType')!r} != {expected_nf_type!r}"
+        )
+        assert envelope.get("nfInstanceId"), "nfInstanceId missing"
+        assert envelope.get("timestamp"), "timestamp missing"
+        assert isinstance(envelope.get("granularityPeriod"), int), "granularityPeriod must be int"
+        measured = envelope.get("measuredObject") or {}
+        assert measured.get("objectType"), "measuredObject.objectType missing"
+        assert measured.get("objectId"), "measuredObject.objectId missing"
+        assert measured.get("plmnId"), "measuredObject.plmnId missing"
+        metrics = envelope.get("metrics")
+        assert isinstance(metrics, list) and metrics, "metrics must be non-empty list"
+        for m in metrics:
+            assert "name" in m and "value" in m, f"metric entry missing name/value: {m}"
+
+    return _assert
+
+
+_SMO_PAYLOAD_ROOT = "/opt/mock-smo/payloads"
+
+
+@pytest.fixture()
+def run_smo_closed_loop(
+    netconf_manager,
+    o1_adapter_base_url,
+    load_config,
+    read_smo_events,
+    read_ws_events,
+    ws_event_log_path,
+    wait_for,
+    wait_for_metric_envelopes,
+    pm_envelope_shape,
+    set_pm_admin_state,
+    configure_mock_smo,
+):
+    """Drive the SMO closed-loop pattern shared by MVP-FUNC-SMO-17-1-a..f tests."""
+
+    def _run(*, payload_file: str, runtime: bool, check_applied: Callable[[dict], bool]):
+        session = requests.Session()
+        configure_mock_smo(f"{_SMO_PAYLOAD_ROOT}/{payload_file}")
+        if not runtime:
+            ws_event_log_path.unlink(missing_ok=True)
+
+        try:
+            set_pm_admin_state(netconf_manager, "GNBCUCPFunction", "cucp1", "UNLOCKED")
+            envelopes = wait_for_metric_envelopes()
+            for env in envelopes[:3]:
+                pm_envelope_shape(env, "gnb")
+
+            wait_for(
+                lambda: any(e.get("event") == "netconf_edit_sent" for e in read_smo_events()),
+                timeout=90,
+            )
+
+            if runtime:
+                wait_for(lambda: check_applied(load_config()), timeout=90)
+                health_resp = session.get(f"{o1_adapter_base_url}/config-healthy", timeout=5)
+                assert health_resp.status_code == 200, health_resp.text
+            else:
+                wait_for(
+                    lambda: session.get(f"{o1_adapter_base_url}/config-healthy", timeout=5).status_code == 400,
+                    timeout=90,
+                )
+                wait_for(lambda: check_applied(load_config()), timeout=90)
+                wait_for(lambda: any(e.get("cmd") == "quit" for e in read_ws_events()), timeout=90)
+        finally:
+            set_pm_admin_state(netconf_manager, "GNBCUCPFunction", "cucp1", "LOCKED")
+            if not runtime:
+                session.post(f"{o1_adapter_base_url}/restarted", timeout=5)
+                wait_for(
+                    lambda: session.get(f"{o1_adapter_base_url}/config-healthy", timeout=5).status_code == 200,
+                    timeout=60,
+                )
+
+    return _run
 
 
 @pytest.fixture(scope="session")

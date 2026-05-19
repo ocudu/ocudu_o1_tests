@@ -271,3 +271,81 @@ def test_rrm_policy_ratio_update_sends_ws_command(
             == 200,
             timeout=60,
         )
+
+
+def _report_config_value(cfg: dict, report_cfg_id: int, leaf: str):
+    """Return the value of `leaf` on the report_configs entry with id `report_cfg_id`, or None."""
+    for rc in cfg.get("cu_cp", {}).get("mobility", {}).get("report_configs", []) or []:
+        if rc.get("report_cfg_id") == report_cfg_id:
+            return rc.get(leaf)
+    return None
+
+
+@getattr(mark, "MVP-FUNC-SMO-17-1-a")
+@mark.timeout(240)
+def test_smo_closed_loop_changes_ho_threshold(run_smo_closed_loop):
+    """SMO closed-loop sets meas_trigger_quantity_threshold_db to -20 on
+    report_configs[report_cfg_id=3]. Non-runtime parameter — adapter requests a full restart."""
+    run_smo_closed_loop(
+        payload_file="set_ho_threshold.xml",
+        runtime=False,
+        check_applied=lambda c: _report_config_value(c, 3, "meas_trigger_quantity_threshold_db") == -20,
+    )
+
+
+@getattr(mark, "MVP-FUNC-SMO-17-1-b")
+@mark.timeout(240)
+def test_smo_closed_loop_changes_pci(run_smo_closed_loop):
+    """SMO closed-loop sets NRCellDU/nRPCI to 200. Non-runtime parameter — adapter requests a full restart."""
+    run_smo_closed_loop(
+        payload_file="set_nrpci.xml",
+        runtime=False,
+        check_applied=lambda c: int(c["cells"][0]["pci"]) == 200,
+    )
+
+
+@getattr(mark, "MVP-FUNC-SMO-17-1-c")
+@mark.timeout(240)
+def test_smo_closed_loop_changes_ho_hysteresis(run_smo_closed_loop):
+    """SMO closed-loop sets hysteresis_db to 5 on report_configs[report_cfg_id=2].
+    Non-runtime parameter — adapter requests a full restart."""
+    run_smo_closed_loop(
+        payload_file="set_hysteresis.xml",
+        runtime=False,
+        check_applied=lambda c: _report_config_value(c, 2, "hysteresis_db") == 5,
+    )
+
+
+@getattr(mark, "MVP-FUNC-SMO-17-1-d")
+@mark.timeout(240)
+def test_smo_closed_loop_changes_time_to_trigger(run_smo_closed_loop):
+    """SMO closed-loop sets time_to_trigger_ms to 256 on report_configs[report_cfg_id=2].
+    Non-runtime parameter — adapter requests a full restart."""
+    run_smo_closed_loop(
+        payload_file="set_time_to_trigger.xml",
+        runtime=False,
+        check_applied=lambda c: _report_config_value(c, 2, "time_to_trigger_ms") == 256,
+    )
+
+
+@getattr(mark, "MVP-FUNC-SMO-17-1-e")
+@mark.timeout(240)
+def test_smo_closed_loop_changes_ssb_tx_power(run_smo_closed_loop):
+    """SMO closed-loop sets ssb_block_power_dbm to -10. Runtime-updatable leaf:
+    adapter applies in place without restart."""
+    run_smo_closed_loop(
+        payload_file="set_ssb_block_power.xml",
+        runtime=True,
+        check_applied=lambda c: int(c["cells"][0]["ssb"]["ssb_block_power_dbm"]) == -10,
+    )
+
+
+@getattr(mark, "MVP-FUNC-SMO-17-1-f")
+@mark.timeout(240)
+def test_smo_closed_loop_changes_preamble_format(run_smo_closed_loop):
+    """SMO closed-loop sets prach_config_index to 100. Non-runtime parameter — adapter requests a full restart."""
+    run_smo_closed_loop(
+        payload_file="set_prach_config_index.xml",
+        runtime=False,
+        check_applied=lambda c: int(c["cells"][0]["prach"]["prach_config_index"]) == 100,
+    )

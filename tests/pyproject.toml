@@ -14,6 +14,7 @@ junit_logging = "all"
 markers = [
   "MVP-ARCH-INTF-5",
   "MVP-SEC-O-CU-03",
+  "MVP-SEC-O-CU-04",
   "MVP-SEC-O-CU-05",
   "MVP-SEC-O-CU-06",
   "MVP-SEC-O-CU-07",
@@ -21,6 +22,13 @@ markers = [
   "MVP-SEC-O-DU-03a",
   "MVP-SEC-O-DU-03b",
   "MVP-SEC-O-DU-04",
+  "MVP-SEC-O-DU-07"
   "MVP-SEC-O-DU-08",
   "MVP-SEC-O-DU-09",
+  "MVP-FUNC-SMO-17-1-a",
+  "MVP-FUNC-SMO-17-1-b",
+  "MVP-FUNC-SMO-17-1-c",
+  "MVP-FUNC-SMO-17-1-d",
+  "MVP-FUNC-SMO-17-1-e",
+  "MVP-FUNC-SMO-17-1-f",
 ]

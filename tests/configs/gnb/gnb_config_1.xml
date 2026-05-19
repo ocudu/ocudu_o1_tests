@@ -52,32 +52,186 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
       <PerfMetricJob>
         <id>defaulttrace</id>
         <attributes>
-          <administrativeState>UNLOCKED</administrativeState>
+          <administrativeState>LOCKED</administrativeState>
           <performanceMetrics>DRB.MaxActiveUeDl</performanceMetrics>
           <granularityPeriod>1</granularityPeriod>
           <!--
           <fileReportingPeriod>10</fileReportingPeriod>
           <fileLocation>/tmp/metrics.json</fileLocation>
           -->
-          <streamTarget>http://192.168.2.42:9560/json</streamTarget>
+          <streamTarget>http://ocudu-mock-smo:9560/json</streamTarget>
         </attributes>
       </PerfMetricJob>
 
-      <!-- No cell specific CU config required
       <NRCellCU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellcu">
-        <id>nrcell1</id>
+        <id>nrcellcu1</id>
         <attributes>
-         <cellLocalId>100</cellLocalId>
-           <pLMNInfoList>
-             <mcc>001</mcc>
-             <mnc>01</mnc>
-             <sd>ff:ff:ff</sd>
-             <sst>1</sst>
-           </pLMNInfoList>
-           <priorityLabel>1</priorityLabel>
+          <cellLocalId>0</cellLocalId>
+          <pLMNInfoList>
+            <mcc>001</mcc>
+            <mnc>01</mnc>
+            <sd>ff:ff:ff</sd>
+            <sst>1</sst>
+          </pLMNInfoList>
+          <priorityLabel>1</priorityLabel>
+          <ocudu_nrcellcu_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+            <periodic_report_cfg_id>1</periodic_report_cfg_id>
+          </ocudu_nrcellcu_mobility_extensions>
         </attributes>
+        <NRCellRelation xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellrelation">
+          <id>rel-0-to-1</id>
+          <attributes>
+            <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
+            <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu2</adjacentNRCellRef>
+            <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+              <report_config_refs>2</report_config_refs>
+              <report_config_refs>3</report_config_refs>
+              <report_config_refs>4</report_config_refs>
+              <report_config_refs>5</report_config_refs>
+            </ocudu_nrcellrelation_mobility_extensions>
+          </attributes>
+        </NRCellRelation>
+        <NRCellRelation xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellrelation">
+          <id>rel-0-to-2</id>
+          <attributes>
+            <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
+            <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu3</adjacentNRCellRef>
+            <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+              <report_config_refs>2</report_config_refs>
+            </ocudu_nrcellrelation_mobility_extensions>
+          </attributes>
+        </NRCellRelation>
       </NRCellCU>
-      -->
+      <NRCellCU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellcu">
+        <id>nrcellcu2</id>
+        <attributes>
+          <cellLocalId>1</cellLocalId>
+          <pLMNInfoList>
+            <mcc>001</mcc>
+            <mnc>01</mnc>
+            <sd>ff:ff:ff</sd>
+            <sst>1</sst>
+          </pLMNInfoList>
+          <priorityLabel>1</priorityLabel>
+          <ocudu_nrcellcu_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+            <periodic_report_cfg_id>1</periodic_report_cfg_id>
+          </ocudu_nrcellcu_mobility_extensions>
+        </attributes>
+        <NRCellRelation xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellrelation">
+          <id>rel-1-to-0</id>
+          <attributes>
+            <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
+            <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu1</adjacentNRCellRef>
+            <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+              <report_config_refs>2</report_config_refs>
+            </ocudu_nrcellrelation_mobility_extensions>
+          </attributes>
+        </NRCellRelation>
+        <NRCellRelation xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellrelation">
+          <id>rel-1-to-2</id>
+          <attributes>
+            <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
+            <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu3</adjacentNRCellRef>
+            <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+              <report_config_refs>2</report_config_refs>
+            </ocudu_nrcellrelation_mobility_extensions>
+          </attributes>
+        </NRCellRelation>
+      </NRCellCU>
+      <NRCellCU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellcu">
+        <id>nrcellcu3</id>
+        <attributes>
+          <cellLocalId>2</cellLocalId>
+          <pLMNInfoList>
+            <mcc>001</mcc>
+            <mnc>01</mnc>
+            <sd>ff:ff:ff</sd>
+            <sst>1</sst>
+          </pLMNInfoList>
+          <priorityLabel>1</priorityLabel>
+          <ocudu_nrcellcu_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+            <periodic_report_cfg_id>1</periodic_report_cfg_id>
+          </ocudu_nrcellcu_mobility_extensions>
+        </attributes>
+        <NRCellRelation xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellrelation">
+          <id>rel-2-to-0</id>
+          <attributes>
+            <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
+            <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu1</adjacentNRCellRef>
+            <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+              <report_config_refs>2</report_config_refs>
+            </ocudu_nrcellrelation_mobility_extensions>
+          </attributes>
+        </NRCellRelation>
+        <NRCellRelation xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellrelation">
+          <id>rel-2-to-1</id>
+          <attributes>
+            <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
+            <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu2</adjacentNRCellRef>
+            <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+              <report_config_refs>2</report_config_refs>
+            </ocudu_nrcellrelation_mobility_extensions>
+          </attributes>
+        </NRCellRelation>
+      </NRCellCU>
+
+      <ocudu_gnbcucpfunction_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+        <trigger_handover_from_measurements>true</trigger_handover_from_measurements>
+        <trigger_cho_on_ue_setup>true</trigger_cho_on_ue_setup>
+        <cho_timeout_ms>15000</cho_timeout_ms>
+        <report_configs>
+          <report_cfg_id>1</report_cfg_id>
+          <report_type>periodical</report_type>
+          <report_interval_ms>1024</report_interval_ms>
+          <periodic_ho_rsrp_offset_db>4</periodic_ho_rsrp_offset_db>
+        </report_configs>
+        <report_configs>
+          <report_cfg_id>2</report_cfg_id>
+          <report_type>event_triggered</report_type>
+          <event_triggered_report_type>a3</event_triggered_report_type>
+          <meas_trigger_quantity>rsrp</meas_trigger_quantity>
+          <meas_trigger_quantity_offset_db>6</meas_trigger_quantity_offset_db>
+          <hysteresis_db>0</hysteresis_db>
+          <time_to_trigger_ms>100</time_to_trigger_ms>
+          <report_interval_ms>1024</report_interval_ms>
+          <t312>200</t312>
+        </report_configs>
+        <report_configs>
+          <report_cfg_id>3</report_cfg_id>
+          <report_type>event_triggered</report_type>
+          <event_triggered_report_type>a5</event_triggered_report_type>
+          <meas_trigger_quantity>rsrq</meas_trigger_quantity>
+          <meas_trigger_quantity_threshold_db>-14</meas_trigger_quantity_threshold_db>
+          <meas_trigger_quantity_threshold_2_db>-8</meas_trigger_quantity_threshold_2_db>
+          <hysteresis_db>1</hysteresis_db>
+          <time_to_trigger_ms>160</time_to_trigger_ms>
+          <report_interval_ms>1024</report_interval_ms>
+        </report_configs>
+        <report_configs>
+          <report_cfg_id>4</report_cfg_id>
+          <report_type>cond_trigger</report_type>
+          <event_triggered_report_type>d1</event_triggered_report_type>
+          <distance_thresh_from_ref1_km>5.00</distance_thresh_from_ref1_km>
+          <distance_thresh_from_ref2_km>3.00</distance_thresh_from_ref2_km>
+          <hysteresis_location_km>0.10</hysteresis_location_km>
+          <time_to_trigger_ms>100</time_to_trigger_ms>
+          <ref_location1>
+            <latitude>48.1350</latitude>
+            <longitude>11.5820</longitude>
+          </ref_location1>
+          <ref_location2>
+            <latitude>48.2000</latitude>
+            <longitude>11.6500</longitude>
+          </ref_location2>
+        </report_configs>
+        <report_configs>
+          <report_cfg_id>5</report_cfg_id>
+          <report_type>cond_trigger</report_type>
+          <event_triggered_report_type>t1</event_triggered_report_type>
+          <t1_thres>2026-05-12T12:00:00.000Z</t1_thres>
+          <duration_s>10.0</duration_s>
+        </report_configs>
+      </ocudu_gnbcucpfunction_mobility_extensions>
 
       <EP_NgC xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-ep">
         <id>ngc1</id>

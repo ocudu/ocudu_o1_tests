@@ -79,6 +79,7 @@ def main() -> int:
     base_env.setdefault("O1_ADAPTER_WS_HOST", "ocudu-mock-gnb")
     base_env.setdefault("O1_ADAPTER_WS_PORT", "8001")
     base_env.setdefault("MOCK_GNB_EVENT_LOG", "/tmp/mock_gnb_events.jsonl")
+    base_env.setdefault("MOCK_SMO_EVENT_LOG", "/tmp/mock_smo_events.jsonl")
     base_env["NETCONF_CONFIGS_DIR"] = str(configs_dir.resolve())
     base_env["O1_ADAPTER_PROFILE"] = profile
 
