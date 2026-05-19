@@ -30,6 +30,23 @@ services:
       smo:
         ipv4_address: 172.21.0.14
 
+  mock_ru:
+    image: ocudu/netconf:latest
+    build:
+      context: ocudu_elements/ocudu_netconf
+      dockerfile: Dockerfile
+    entrypoint: ["sh", "-c"]
+    command: ["exec /usr/local/bin/entrypoint.sh --config ru --enable-tls"]
+    container_name: ocudu-mock-ru
+    ports:
+      - 16513:6513
+    volumes:
+      - mock-ru-tls-certs:/etc/netconf-tls
+    networks:
+      smo:
+        ipv4_address: 172.21.0.17
+    profiles: ["test", "dev"]
+
   o1_adapter:
     image: ocudu/o1_adapter:latest
     build:
@@ -118,6 +135,8 @@ services:
         condition: service_started
       mock_gnb:
         condition: service_started
+      mock_ru:
+        condition: service_started
       yaml_validator:
         condition: service_started
       o1_adapter:
@@ -129,6 +148,10 @@ services:
       NETCONF_PASSWORD: root
       NETCONF_TLS_PORT: "6513"
       NETCONF_TLS_CERT_DIR: /etc/netconf-tls-client
+      MOCK_RU_HOST: ocudu-mock-ru
+      MOCK_RU_SSH_PORT: "830"
+      MOCK_RU_TLS_PORT: "6513"
+      MOCK_RU_TLS_CERT_DIR: /etc/mock-ru-tls-client
       O1_ADAPTER_HOST: ocudu-o1-adapter
       O1_ADAPTER_PORT: "5000"
       CONFIG_PATH: /tmp/config.yaml
@@ -140,6 +163,7 @@ services:
       # Read the netconf container's self-signed CA + client cert/key out of the
       # same named volume; the test fixture connects via mTLS using these.
       - netconf-tls-certs:/etc/netconf-tls-client:ro
+      - mock-ru-tls-certs:/etc/mock-ru-tls-client:ro
     networks:
       smo:
         ipv4_address: 172.21.0.15
@@ -149,6 +173,7 @@ volumes:
   shared-data:
   o1-test-results:
   netconf-tls-certs:
+  mock-ru-tls-certs:
 
 networks:
   smo:
