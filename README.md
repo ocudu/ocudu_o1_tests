@@ -51,7 +51,7 @@ $ O1_TEST_RESULTS_DIR=$PWD/log ./run_tests.py <profile>
 
 After the run, `log/` contains one `out_<profile>_<label>.xml` per iteration plus a merged `out.xml`.
 
-`run_tests.py` starts the netconf container with `--enable-tls`, exposing a NETCONF-over-TLS endpoint on port `6513` alongside the SSH endpoint on `830`. The certs land in a shared `tls-certs` named volume, which the test container mounts read-only and reads from to connect via mTLS. The volume is wiped between iterations by `docker compose down -v`.
+`run_tests.py` starts the netconf container with `--enable-tls`, exposing a NETCONF-over-TLS endpoint on port `6513` alongside the SSH endpoint on `830`. The certs land in a shared `netconf-tls-certs` named volume, which the test container mounts read-only and reads from to connect via mTLS. The volume is wiped between iterations by `docker compose down -v`.
 
 See [`ocudu_elements/ocudu_netconf/README.md`](ocudu_elements/ocudu_netconf/README.md) for the netconf container's `--enable-tls` flag, the dual-mode cert dir behavior, and the `cert-to-name` mapping that turns a client cert's CN into the NETCONF username.
 
@@ -70,7 +70,7 @@ To bring the stack up with TLS enabled, pass `--enable-tls` in `NETCONF_ARGS`:
 NETCONF_ARGS="--config gnb --enable-tls" docker compose -f docker-compose.yml --profile dev up
 ```
 
-Both endpoints come up: SSH on `830`, TLS on `6513`. The netconf container provisions certs into the shared `tls-certs` named volume. See [`ocudu_elements/ocudu_netconf/README.md`](ocudu_elements/ocudu_netconf/README.md) for the self-sign vs. operator-provisioned modes and how to extract the client cert/key for an external NETCONF client.
+Both endpoints come up: SSH on `830`, TLS on `6513`. The netconf container provisions certs into the shared `netconf-tls-certs` named volume. See [`ocudu_elements/ocudu_netconf/README.md`](ocudu_elements/ocudu_netconf/README.md) for the self-sign vs. operator-provisioned modes and how to extract the client cert/key for an external NETCONF client.
 
 
 # Launch minimal SMO standalone 
