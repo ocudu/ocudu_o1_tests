@@ -126,6 +126,54 @@ def tls_netconf_manager():
 
 
 @pytest.fixture(scope="session")
+def mock_ru_ssh_manager():
+    """Connect to the mock RU's NETCONF-over-SSH endpoint."""
+    host = os.getenv("MOCK_RU_HOST", "ocudu-mock-ru")
+    port = int(os.getenv("MOCK_RU_SSH_PORT", "830"))
+    username = os.getenv("NETCONF_USERNAME", "root")
+    password = os.getenv("NETCONF_PASSWORD", "root")
+
+    def _connect():
+        return manager.connect(
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            hostkey_verify=False,
+            allow_agent=False,
+            look_for_keys=False,
+            timeout=10,
+        )
+
+    conn = _wait_for(_connect, timeout=120)
+    yield conn
+    conn.close_session()
+
+
+@pytest.fixture(scope="session")
+def mock_ru_tls_manager():
+    """Connect to the mock RU's NETCONF-over-TLS endpoint with mTLS."""
+    cert_dir = Path(os.getenv("MOCK_RU_TLS_CERT_DIR", "/etc/mock-ru-tls-client"))
+    host = os.getenv("MOCK_RU_HOST", "ocudu-mock-ru")
+    port = int(os.getenv("MOCK_RU_TLS_PORT", "6513"))
+
+    def _connect():
+        return manager.connect_tls(
+            host=host,
+            port=port,
+            keyfile=str(cert_dir / "client.key"),
+            certfile=str(cert_dir / "client.crt"),
+            ca_certs=str(cert_dir / "ca.crt"),
+            protocol=ssl.PROTOCOL_TLS_CLIENT,
+            check_hostname=False,
+        )
+
+    conn = _wait_for(_connect, timeout=120)
+    yield conn
+    conn.close_session()
+
+
+@pytest.fixture(scope="session")
 def ws_event_log_path() -> Path:
     """Return the path used by the mock gNB to persist WebSocket events."""
     return Path(os.getenv("MOCK_GNB_EVENT_LOG", "/tmp/mock_gnb_events.jsonl"))

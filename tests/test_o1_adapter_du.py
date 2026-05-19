@@ -187,13 +187,31 @@ def test_non_runtime_change_triggers_restart_request(
         )
 
 
-@getattr(mark, "MVP-SEC-O-DU-03a")
+@getattr(mark, "MVP-SEC-O-DU-08")
+@getattr(mark, "MVP-SEC-O-DU-09")
 @mark.timeout(60)
 def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
-    """Connect over mutual TLS and verify the running config is fetchable."""
+    """Connect to the O1 NETCONF endpoint over mutual TLS and verify the running config is fetchable."""
     reply = tls_netconf_manager.get_config(source="running")
     xml = reply.data_xml
     assert xml and "<" in xml
+
+
+@getattr(mark, "MVP-SEC-O-DU-03a")
+@getattr(mark, "MVP-SEC-O-DU-04")
+@mark.timeout(60)
+def test_mplane_mtls(mock_ru_tls_manager):
+    """Mutual TLS to the RU's M-Plane endpoint; running config is fetchable."""
+    reply = mock_ru_tls_manager.get_config(source="running")
+    assert reply.data_xml and "<" in reply.data_xml
+
+
+@getattr(mark, "MVP-SEC-O-DU-03b")
+@mark.timeout(60)
+def test_mplane_ssh(mock_ru_ssh_manager):
+    """NETCONF over SSH v2 to the RU's M-Plane endpoint; running config is fetchable."""
+    reply = mock_ru_ssh_manager.get_config(source="running")
+    assert reply.data_xml and "<" in reply.data_xml
 
 
 @getattr(mark, "MVP-ARCH-INTF-5")

@@ -16,4 +16,8 @@ markers = [
   "MVP-SEC-O-CU-05",
   "MVP-SEC-O-CU-07",
   "MVP-SEC-O-DU-03a",
+  "MVP-SEC-O-DU-03b",
+  "MVP-SEC-O-DU-04",
+  "MVP-SEC-O-DU-08",
+  "MVP-SEC-O-DU-09",
 ]
