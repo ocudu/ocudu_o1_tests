@@ -24,9 +24,10 @@ def test_rendered_configuration_accepts_dryrun(dryrun_result):
 
 @getattr(mark, "MVP-ARCH-INTF-8")
 @getattr(mark, "MVP-SEC-O-CU-05")
+@getattr(mark, "MVP-SEC-O-CU-06")
 @mark.timeout(60)
 def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
-    """Connect over mutual TLS and verify the running config is fetchable."""
+    """Connect to the O1 NETCONF endpoint over mutual TLS and verify the running config is fetchable."""
     reply = tls_netconf_manager.get_config(source="running")
     xml = reply.data_xml
     assert xml and "<" in xml

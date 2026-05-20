@@ -23,9 +23,17 @@ def test_rendered_configuration_accepts_dryrun(dryrun_result):
     )
 
 
+@getattr(mark, "MVP-SEC-O-CU-05")
+@getattr(mark, "MVP-SEC-O-CU-06")
+@getattr(mark, "MVP-SEC-O-CU-07")
+@getattr(mark, "MVP-SEC-O-CU-08")
 @mark.timeout(60)
 def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
-    """Connect over mutual TLS and verify the running config is fetchable."""
+    """Connect to the O1 NETCONF endpoint over mutual TLS and verify the running config is fetchable.
+
+    The combined CU runs CU-CP and CU-UP in the same component, so this single
+    mTLS test covers the O1 security requirements for both halves.
+    """
     reply = tls_netconf_manager.get_config(source="running")
     xml = reply.data_xml
     assert xml and "<" in xml
