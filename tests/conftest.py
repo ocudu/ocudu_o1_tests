@@ -7,6 +7,7 @@ import ssl
 import time
 from pathlib import Path
 from typing import Callable, Optional
+from xml.etree import ElementTree as ET
 
 import pytest
 import requests
@@ -268,41 +269,89 @@ def set_pm_admin_state():
     return _set
 
 
+def _localname(tag: str) -> str:
+    return tag.split("}", 1)[-1] if "}" in tag else tag
+
+
+def _find_pm_attributes(root: ET.Element):
+    """Return the <attributes> element under PerfMetricJob[id=defaulttrace], or None."""
+    for job in root.iter():
+        if _localname(job.tag) != "PerfMetricJob":
+            continue
+        job_id = next((c for c in job if _localname(c.tag) == "id"), None)
+        if job_id is None or (job_id.text or "").strip() != "defaulttrace":
+            continue
+        return next((c for c in job if _localname(c.tag) == "attributes"), None)
+    return None
+
+
+def _pm_job_subtree_filter(nf_function: str, function_id: str) -> str:
+    return f"""
+        <ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+          <id>ran1</id>
+          <{nf_function} xmlns="{_NF_FUNCTION_NS[nf_function]}">
+            <id>{function_id}</id>
+            <PerfMetricJob>
+              <id>defaulttrace</id>
+            </PerfMetricJob>
+          </{nf_function}>
+        </ManagedElement>
+    """
+
+
 @pytest.fixture()
-def wait_for_metric_envelopes(read_smo_events, wait_for):
-    """Return a callable that polls the mock SMO log until `min_count` metric envelopes arrive."""
+def set_pm_performance_metrics():
+    """Replace PerfMetricJob[id=defaulttrace].performanceMetrics via netconf R-M-W.
 
-    def _wait(min_count: int = 3, timeout: int = 90) -> list[dict]:
-        def _have_enough():
-            evts = [e for e in read_smo_events() if isinstance(e, dict) and "metrics" in e]
-            return evts if len(evts) >= min_count else None
+    The edit_config itself is atomic (one transaction replacing <attributes>, so sibling
+    leafs administrativeState/granularityPeriod/streamTarget/... are preserved); the
+    get-then-edit pair is not — a concurrent writer between the two would be clobbered.
+    Test-only helper.
+    """
 
-        return wait_for(_have_enough, timeout=timeout)
-
-    return _wait
-
-
-@pytest.fixture()
-def pm_envelope_shape():
-    """Assert a PM JSON envelope conforms to the agreed schema."""
-
-    def _assert(envelope: dict, expected_nf_type: str):
-        assert envelope.get("nfType") == expected_nf_type, (
-            f"nfType {envelope.get('nfType')!r} != {expected_nf_type!r}"
+    def _set(manager, nf_function: str, function_id: str, names: list[str]) -> None:
+        reply = manager.get_config(
+            source="running",
+            filter=("subtree", _pm_job_subtree_filter(nf_function, function_id)),
         )
-        assert envelope.get("nfInstanceId"), "nfInstanceId missing"
-        assert envelope.get("timestamp"), "timestamp missing"
-        assert isinstance(envelope.get("granularityPeriod"), int), "granularityPeriod must be int"
-        measured = envelope.get("measuredObject") or {}
-        assert measured.get("objectType"), "measuredObject.objectType missing"
-        assert measured.get("objectId"), "measuredObject.objectId missing"
-        assert measured.get("plmnId"), "measuredObject.plmnId missing"
-        metrics = envelope.get("metrics")
-        assert isinstance(metrics, list) and metrics, "metrics must be non-empty list"
-        for m in metrics:
-            assert "name" in m and "value" in m, f"metric entry missing name/value: {m}"
+        root = ET.fromstring(reply.data_xml)
+        attrs = _find_pm_attributes(root)
+        if attrs is None:
+            raise RuntimeError("PerfMetricJob[id=defaulttrace] not found in running config")
 
-    return _assert
+        siblings = [
+            (_localname(el.tag), (el.text or "").strip())
+            for el in attrs
+            if _localname(el.tag) != "performanceMetrics"
+        ]
+        sibling_xml = "\n              ".join(f"<{tag}>{value}</{tag}>" for tag, value in siblings)
+        metrics_xml = "\n              ".join(
+            f"<performanceMetrics>{name}</performanceMetrics>" for name in names
+        )
+
+        manager.edit_config(
+            target="running",
+            config=f"""
+            <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"
+                    xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
+              <ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+                <id>ran1</id>
+                <{nf_function} xmlns="{_NF_FUNCTION_NS[nf_function]}">
+                  <id>{function_id}</id>
+                  <PerfMetricJob>
+                    <id>defaulttrace</id>
+                    <attributes nc:operation="replace">
+                      {sibling_xml}
+                      {metrics_xml}
+                    </attributes>
+                  </PerfMetricJob>
+                </{nf_function}>
+              </ManagedElement>
+            </config>
+            """,
+        )
+
+    return _set
 
 
 _SMO_PAYLOAD_ROOT = "/opt/mock-smo/payloads"
@@ -317,24 +366,32 @@ def run_smo_closed_loop(
     read_ws_events,
     ws_event_log_path,
     wait_for,
-    wait_for_metric_envelopes,
-    pm_envelope_shape,
     set_pm_admin_state,
+    set_pm_performance_metrics,
     configure_mock_smo,
 ):
     """Drive the SMO closed-loop pattern shared by MVP-FUNC-SMO-17-1-a..f tests."""
 
-    def _run(*, payload_file: str, runtime: bool, check_applied: Callable[[dict], bool]):
+    def _run(
+        *,
+        payload_file: str,
+        runtime: bool,
+        check_applied: Callable[[dict], bool],
+        pm_filter: list[str],
+    ):
         session = requests.Session()
-        configure_mock_smo(f"{_SMO_PAYLOAD_ROOT}/{payload_file}")
         if not runtime:
             ws_event_log_path.unlink(missing_ok=True)
 
+        pm_target = ("GNBCUCPFunction", "cucp1")
         try:
-            set_pm_admin_state(netconf_manager, "GNBCUCPFunction", "cucp1", "UNLOCKED")
-            envelopes = wait_for_metric_envelopes()
-            for env in envelopes[:3]:
-                pm_envelope_shape(env, "gnb")
+            # Stop PM streaming while swapping in this test's metric filter.
+            set_pm_admin_state(netconf_manager, *pm_target, "LOCKED")
+            set_pm_performance_metrics(netconf_manager, *pm_target, pm_filter)
+
+            # Arm the SMO trigger only after the expected PM filter is active.
+            configure_mock_smo(f"{_SMO_PAYLOAD_ROOT}/{payload_file}", clear_log=True)
+            set_pm_admin_state(netconf_manager, *pm_target, "UNLOCKED")
 
             wait_for(
                 lambda: any(e.get("event") == "netconf_edit_sent" for e in read_smo_events()),
@@ -353,7 +410,7 @@ def run_smo_closed_loop(
                 wait_for(lambda: check_applied(load_config()), timeout=90)
                 wait_for(lambda: any(e.get("cmd") == "quit" for e in read_ws_events()), timeout=90)
         finally:
-            set_pm_admin_state(netconf_manager, "GNBCUCPFunction", "cucp1", "LOCKED")
+            set_pm_admin_state(netconf_manager, *pm_target, "LOCKED")
             if not runtime:
                 session.post(f"{o1_adapter_base_url}/restarted", timeout=5)
                 wait_for(
