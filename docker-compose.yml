@@ -132,7 +132,7 @@ services:
         condition: service_started
     networks:
       smo:
-        ipv4_address: 172.21.0.17
+        ipv4_address: 172.21.0.18
     profiles: ["test", "dev"]
     volumes:
       - shared-data:/tmp
