@@ -290,6 +290,7 @@ def test_smo_closed_loop_changes_ho_threshold(run_smo_closed_loop):
         payload_file="set_ho_threshold.xml",
         runtime=False,
         check_applied=lambda c: _report_config_value(c, 3, "meas_trigger_quantity_threshold_db") == -20,
+        pm_filter=["DLLat_gNB-DU"],
     )
 
 
@@ -301,6 +302,7 @@ def test_smo_closed_loop_changes_pci(run_smo_closed_loop):
         payload_file="set_nrpci.xml",
         runtime=False,
         check_applied=lambda c: int(c["cells"][0]["pci"]) == 200,
+        pm_filter=["DlUeThroughput_Cell", "UlUeThroughput_Cell"],
     )
 
 
@@ -313,6 +315,7 @@ def test_smo_closed_loop_changes_ho_hysteresis(run_smo_closed_loop):
         payload_file="set_hysteresis.xml",
         runtime=False,
         check_applied=lambda c: _report_config_value(c, 2, "hysteresis_db") == 5,
+        pm_filter=["DLRelPSR_Uu", "ULRelPSR_Uu"],
     )
 
 
@@ -325,6 +328,7 @@ def test_smo_closed_loop_changes_time_to_trigger(run_smo_closed_loop):
         payload_file="set_time_to_trigger.xml",
         runtime=False,
         check_applied=lambda c: _report_config_value(c, 2, "time_to_trigger_ms") == 256,
+        pm_filter=["cells.cell_metrics.average_latency"],
     )
 
 
@@ -337,6 +341,7 @@ def test_smo_closed_loop_changes_ssb_tx_power(run_smo_closed_loop):
         payload_file="set_ssb_block_power.xml",
         runtime=True,
         check_applied=lambda c: int(c["cells"][0]["ssb"]["ssb_block_power_dbm"]) == -10,
+        pm_filter=["cells.ue_list.cqi", "cells.ue_list.dl_brate"],
     )
 
 
@@ -348,4 +353,5 @@ def test_smo_closed_loop_changes_preamble_format(run_smo_closed_loop):
         payload_file="set_prach_config_index.xml",
         runtime=False,
         check_applied=lambda c: int(c["cells"][0]["prach"]["prach_config_index"]) == 100,
+        pm_filter=["rlc_metrics.tx.num_sdus", "rlc_metrics.rx.num_pdus"],
     )
