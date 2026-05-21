@@ -99,9 +99,9 @@ def test_initial_configuration_written(config_path: Path, load_config):
 @mark.timeout(240)
 def test_rendered_configuration_accepts_dryrun(dryrun_result):
     """Ensure the rendered config can be loaded by the component in dry-run mode."""
-    assert dryrun_result["status_code"] == 0, (
-        f"dry-run failed:\n{dryrun_result['logs']}"
-    )
+    assert (
+        dryrun_result["status_code"] == 0
+    ), f"dry-run failed:\n{dryrun_result['logs']}"
 
 
 @getattr(mark, "MVP-ARCH-INTF-5")
@@ -187,6 +187,7 @@ def test_non_runtime_change_triggers_restart_request(
         )
 
 
+@getattr(mark, "MVP-SEC-O-DU-07")
 @getattr(mark, "MVP-SEC-O-DU-08")
 @getattr(mark, "MVP-SEC-O-DU-09")
 @mark.timeout(60)
