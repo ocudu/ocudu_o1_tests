@@ -38,6 +38,9 @@ services:
     entrypoint: ["sh", "-c"]
     command: ["exec /usr/local/bin/entrypoint.sh --config ru --enable-tls"]
     container_name: ocudu-mock-ru
+    environment:
+      # username with which netconf client will be authenticated when connecting via tls -> nacm-rules apply
+      CLIENT_CN: mplane
     ports:
       - 16513:6513
     volumes:
