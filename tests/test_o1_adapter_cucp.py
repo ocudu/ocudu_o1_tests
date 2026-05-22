@@ -23,6 +23,7 @@ def test_rendered_configuration_accepts_dryrun(dryrun_result):
     )
 
 @getattr(mark, "MVP-ARCH-INTF-8")
+@getattr(mark, "MVP-SEC-O-CU-03")
 @getattr(mark, "MVP-SEC-O-CU-05")
 @getattr(mark, "MVP-SEC-O-CU-06")
 @mark.timeout(60)
