@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 from pathlib import Path
-from pytest import mark
+from pytest import mark, raises
 
 import requests
+from ncclient.operations import RPCError
 
 
 def _update_ssb_block_power(manager, value: int):
@@ -213,6 +214,38 @@ def test_mplane_ssh(mock_ru_ssh_manager):
     """NETCONF over SSH v2 to the RU's M-Plane endpoint; running config is fetchable."""
     reply = mock_ru_ssh_manager.get_config(source="running")
     assert reply.data_xml and "<" in reply.data_xml
+
+
+@getattr(mark, "MVP-SEC-O-DU-05")
+@mark.timeout(60)
+def test_mplane_nacm_read_allowed(mock_ru_tls_manager):
+    """NACM permits read for the M-Plane client; get-config succeeds."""
+    reply = mock_ru_tls_manager.get_config(source="running")
+    assert reply.data_xml and "<" in reply.data_xml
+
+
+@getattr(mark, "MVP-SEC-O-DU-05")
+@mark.timeout(60)
+def test_mplane_nacm_write_denied(mock_ru_tls_manager):
+    """NACM denies write for the M-Plane client; edit-config returns access-denied."""
+    # clock-classes value must not already be in the loaded RU config — sysrepo
+    # skips the NACM check when the merge produces no diff.
+    with raises(RPCError) as exc_info:
+        mock_ru_tls_manager.edit_config(
+            target="running",
+            config="""
+            <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+              <sync xmlns="urn:o-ran:sync:1.0">
+                <ptp-config>
+                  <accepted-clock-classes>
+                    <clock-classes>165</clock-classes>
+                  </accepted-clock-classes>
+                </ptp-config>
+              </sync>
+            </config>
+            """,
+        )
+    assert exc_info.value.tag == "access-denied"
 
 
 @getattr(mark, "MVP-ARCH-INTF-5")
