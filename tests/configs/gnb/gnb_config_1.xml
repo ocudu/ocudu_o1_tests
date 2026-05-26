@@ -245,6 +245,16 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
       </EP_NgC>
 
       <ocudu_gnbcucpfunction_extensions xmlns="urn:ocudu-gnbcucpfunction-extension:1.0">
+        <ocudu_metrics_extensions>
+          <periodicity>
+            <cu_cp_report_period>1000</cu_cp_report_period>
+          </periodicity>
+          <layers>
+            <enable_rrc>false</enable_rrc>
+            <enable_ngap>false</enable_ngap>
+          </layers>
+        </ocudu_metrics_extensions>
+
         <ocudu_pcap_extensions>
           <ngap>
             <filename>/tmp/gnb_ngap.pcap</filename>
@@ -293,7 +303,28 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
       </attributes>
     </RRMPolicyRatio>
 
+    <EP_NgU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-ep">
+      <id>ngu1</id>
+      <attributes>
+        <localAddress>
+          <ipAddress>10.53.1.1</ipAddress>
+          <vlanId>0</vlanId>
+        </localAddress>
+        <remoteAddress>10.53.1.2</remoteAddress>
+      </attributes>
+    </EP_NgU>
+
     <ocudu_gnbcuupfunction_extensions xmlns="urn:ocudu-gnbcuupfunction-extension:1.0">
+      <ocudu_metrics_extensions>
+        <periodicity>
+          <cu_up_report_period>1000</cu_up_report_period>
+        </periodicity>
+        <layers>
+          <enable_pdcp>false</enable_pdcp>
+          <enable_e1ap>false</enable_e1ap>
+        </layers>
+      </ocudu_metrics_extensions>
+
       <ocudu_pcap_extensions>
         <n3>
           <filename>/tmp/gnb_n3.pcap</filename>
@@ -570,15 +601,12 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
         <enable_log>true</enable_log>
         <periodicity>
           <du_report_period>1000</du_report_period>
-          <cu_up_report_period>1000</cu_up_report_period>
-          <cu_cp_report_period>1000</cu_cp_report_period>
         </periodicity>
         <layers>
           <enable_ru>true</enable_ru>
           <enable_sched>true</enable_sched>
           <enable_rlc>false</enable_rlc>
           <enable_mac>false</enable_mac>
-          <enable_pdcp>false</enable_pdcp>
           <enable_du_low>false</enable_du_low>
         </layers>
       </ocudu_metrics_extensions>
