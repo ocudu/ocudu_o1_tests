@@ -56,7 +56,6 @@ def main() -> int:
         "--profile",
         "test",
         "up",
-        "--build",
         "--abort-on-container-exit",
         "--exit-code-from",
         "o1_tests",
@@ -75,11 +74,22 @@ def main() -> int:
         "--remove-orphans",
     ]
 
+    netconf_sha = subprocess.check_output(
+        ["git", "-C", str(compose_dir / "ocudu_elements" / "ocudu_netconf"),
+         "rev-parse", "HEAD"],
+        text=True,
+    ).strip()
+
     base_env = os.environ.copy()
     base_env.setdefault("O1_ADAPTER_WS_HOST", "ocudu-mock-gnb")
     base_env.setdefault("O1_ADAPTER_WS_PORT", "8001")
     base_env.setdefault("MOCK_GNB_EVENT_LOG", "/tmp/mock_gnb_events.jsonl")
     base_env.setdefault("MOCK_SMO_EVENT_LOG", "/tmp/mock_smo_events.jsonl")
+    base_env.setdefault(
+        "NETCONF_IMAGE_REPO",
+        "registry.gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf/netconf_amd64",
+    )
+    base_env["NETCONF_COMMIT"] = netconf_sha
     base_env["NETCONF_CONFIGS_DIR"] = str(configs_dir.resolve())
     base_env["O1_ADAPTER_PROFILE"] = profile
 
