@@ -148,6 +148,7 @@ services:
     cap_add:
       - IPC_LOCK
       - SYS_NICE
+      - PERFMON
     environment:
       O1_ADAPTER_PROFILE: ${O1_ADAPTER_PROFILE:-gnb}
     volumes:
