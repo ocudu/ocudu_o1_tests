@@ -42,6 +42,14 @@ $ ./run_tests.py <profile>
 
 For each profile the suite runs once with the bundled config baked into the netconf image, then once per custom XML under `tests/configs/<profile>/`.
 
+By default `run_tests.py` reuses existing images. When iterating on the `ocudu_netconf` or `ocudu_o1_adapter` submodules locally, pass `--build` so the images are rebuilt from your checkouts first — otherwise stale images are reused silently (`o1_adapter` is pinned to `:latest`, and uncommitted netconf changes don't bump its SHA tag):
+
+```bash
+$ ./run_tests.py --build <profile>
+```
+
+CI omits `--build` and pulls the prebuilt netconf image by submodule SHA instead.
+
 To inspect the JUnit XML reports after the run, set `O1_TEST_RESULTS_DIR` to a host path before invoking the script. Without it, results are written to a docker volume that gets wiped by the `down --volumes` between iterations.
 
 ```bash
