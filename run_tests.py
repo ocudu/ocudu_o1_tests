@@ -30,6 +30,7 @@ PROFILES = ("gnb", "cu", "cucp", "cuup", "du")
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("profile", choices=PROFILES)
+    parser.add_argument("--build", action="store_true")
     args = parser.parse_args()
     profile: str = args.profile
 
@@ -61,6 +62,9 @@ def main() -> int:
         "o1_tests",
         "o1_tests",
     ]
+
+    if args.build:
+        up_cmd.insert(up_cmd.index("up") + 1, "--build")
 
     down_cmd = [
         "docker",
