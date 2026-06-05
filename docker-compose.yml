@@ -142,6 +142,7 @@ services:
 
   yaml_validator:
     image: registry.gitlab.com/ocudu/ocudu/ocudu_nightly_avx2:latest
+    pull_policy: always
     container_name: ocudu-yaml-validator
     entrypoint: ["/bin/sh", "/opt/yaml_validator/dryrun.sh"]
     network_mode: "none"
