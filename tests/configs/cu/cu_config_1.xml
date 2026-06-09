@@ -251,8 +251,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             <ipAddress>127.0.10.1</ipAddress>
             <vlanId>0</vlanId>
           </localAddress>
-          <!-- f1ap DU peer address -->
-          <remoteAddress>127.0.10.2</remoteAddress>
+          <!-- no remoteAddress: CU-CP is the F1-C server (bind only); the connect address is on the DU -->
         </attributes>
       </EP_F1C>
 
@@ -338,8 +337,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <ipAddress>127.0.0.1</ipAddress>
           <vlanId>0</vlanId>
         </localAddress>
-        <!-- NG-U UPF peer address -->
-        <remoteAddress>127.0.0.2</remoteAddress>
+        <!-- no remoteAddress: the N3/NG-U peer (UPF) is provided by the core via signaling -->
       </attributes>
     </EP_NgU>
 
@@ -351,8 +349,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <ipAddress>127.0.10.1</ipAddress>
           <vlanId>0</vlanId>
         </localAddress>
-        <!-- f1u DU peer address -->
-        <remoteAddress>127.0.10.2</remoteAddress>
+        <!-- no remoteAddress: the F1-U peer is learned via F1AP signaling -->
       </attributes>
     </EP_F1U>
 

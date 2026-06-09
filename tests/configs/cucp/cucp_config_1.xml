@@ -97,8 +97,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             <ipAddress>127.0.20.1</ipAddress>
             <vlanId>0</vlanId>
           </localAddress>
-          <!-- e1ap CU-UP peer address -->
-          <remoteAddress>127.0.20.2</remoteAddress>
+          <!-- no remoteAddress: CU-CP is the E1 server (bind only); the connect address is on the CU-UP -->
         </attributes>
       </EP_E1>
 
@@ -110,8 +109,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             <ipAddress>127.0.10.1</ipAddress>
             <vlanId>0</vlanId>
           </localAddress>
-          <!-- f1ap DU peer address -->
-          <remoteAddress>127.0.10.2</remoteAddress>
+          <!-- no remoteAddress: CU-CP is the F1-C server (bind only); the connect address is on the DU -->
         </attributes>
       </EP_F1C>
 

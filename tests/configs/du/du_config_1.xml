@@ -243,8 +243,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <ipAddress>10.11.13.112</ipAddress>
           <vlanId>101</vlanId>
         </localAddress>
-        <!-- f1u connect ip4v/ipv6 address -->
-        <remoteAddress>10.11.13.113</remoteAddress>
+        <!-- no remoteAddress: the F1-U peer is learned via F1AP signaling -->
       </attributes>
     </EP_F1U>
 

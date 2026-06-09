@@ -311,7 +311,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <ipAddress>10.53.1.1</ipAddress>
           <vlanId>0</vlanId>
         </localAddress>
-        <remoteAddress>10.53.1.2</remoteAddress>
+        <!-- no remoteAddress: the N3/NG-U peer (UPF) is provided by the core via signaling -->
       </attributes>
     </EP_NgU>
 
@@ -568,8 +568,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <ipAddress>10.11.13.112</ipAddress>
           <vlanId>101</vlanId>
         </localAddress>
-        <!-- f1u connect ip4v/ipv6 address -->
-        <remoteAddress>10.11.13.113</remoteAddress>
+        <!-- no remoteAddress: the F1-U peer is learned via F1AP signaling -->
       </attributes>
     </EP_F1U>
 
