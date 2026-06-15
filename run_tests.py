@@ -97,6 +97,10 @@ def main() -> int:
     base_env["NETCONF_CONFIGS_DIR"] = str(configs_dir.resolve())
     base_env["O1_ADAPTER_PROFILE"] = profile
 
+    results_dir = os.environ.get("O1_TEST_RESULTS_DIR")
+    if results_dir:
+        os.makedirs(results_dir, exist_ok=True)
+
     overall_rc = 0
     results: list[tuple[str, int]] = []
 
@@ -120,6 +124,14 @@ def main() -> int:
         )
 
         up_proc = subprocess.run(up_cmd, cwd=compose_dir, check=False, env=env)
+        if results_dir:
+            # Save the adapter-generated config, named per netconf config, before
+            # `down --volumes` wipes it, so CI can publish it as an artifact.
+            subprocess.run(
+                ["docker", "cp", "ocudu-o1-adapter:/tmp/config.yaml",
+                 f"{results_dir}/config_{profile}_{label}.yaml"],
+                cwd=compose_dir, check=False, env=env,
+            )
         subprocess.run(down_cmd, cwd=compose_dir, check=False, env=env)
 
         results.append((f"{profile}/{label}", up_proc.returncode))
@@ -131,7 +143,6 @@ def main() -> int:
         status = "PASS" if rc == 0 else f"FAIL (exit {rc})"
         print(f"  {name}: {status}")
 
-    results_dir = os.environ.get("O1_TEST_RESULTS_DIR")
     if results_dir:
         merge_junit_reports(Path(results_dir), profile)
 

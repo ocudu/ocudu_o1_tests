@@ -122,6 +122,7 @@ o1 integration tests:
       junit: ${CI_JOB_ID}_xunit.xml
     paths:
       - ${CI_JOB_ID}_xunit.xml
+      - artifacts/config_*.yaml
     expire_in: 5 days
 
 update submodule pointer:
