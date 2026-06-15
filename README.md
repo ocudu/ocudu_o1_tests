@@ -57,7 +57,7 @@ $ mkdir -p log
 $ O1_TEST_RESULTS_DIR=$PWD/log ./run_tests.py <profile>
 ```
 
-After the run, `log/` contains one `out_<profile>_<label>.xml` per iteration plus a merged `out.xml`.
+After the run, `log/` contains, per iteration, the JUnit report `out_<profile>_<label>.xml` and the config the O1 adapter generated for that netconf config, saved as `config_<profile>_<label>.yaml`; it also holds the merged `out.xml`.
 
 `run_tests.py` starts the netconf container with `--enable-tls`, exposing a NETCONF-over-TLS endpoint on port `6513` alongside the SSH endpoint on `830`. The certs land in a shared `netconf-tls-certs` named volume, which the test container mounts read-only and reads from to connect via mTLS. The volume is wiped between iterations by `docker compose down -v`.
 
