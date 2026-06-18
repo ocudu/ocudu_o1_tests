@@ -11,6 +11,7 @@ addopts = [
 ]
 testpaths = ["."]
 junit_logging = "all"
+log_level = "INFO"
 markers = [
   "MVP-ARCH-INTF-5",
   "MVP-SEC-O-CU-03",
