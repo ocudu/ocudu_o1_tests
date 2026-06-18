@@ -1,15 +1,18 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+import logging
 from pathlib import Path
 from pytest import mark, raises
 
 import requests
 from ncclient.operations import RPCError
 
+logger = logging.getLogger(__name__)
+
 
 def _update_ssb_block_power(manager, value: int):
-    """Send a NETCONF edit-config to update the SSB block power."""
+    logger.info("Send a NETCONF edit-config to update the SSB block power.")
     manager.edit_config(
         target="running",
         config=f"""
@@ -36,7 +39,7 @@ def _update_ssb_block_power(manager, value: int):
 
 
 def _update_cell_pci(manager, value: int):
-    """Send a NETCONF edit-config to update the NR PCI (nRPCI)."""
+    logger.info("Send a NETCONF edit-config to update the NR PCI (nRPCI).")
     manager.edit_config(
         target="running",
         config=f"""
@@ -59,7 +62,7 @@ def _update_cell_pci(manager, value: int):
 
 
 def _update_rrm_policy_min_ratio(manager, value: int):
-    """Send a NETCONF edit-config to update the RRM policy min ratio."""
+    logger.info("Send a NETCONF edit-config to update the RRM policy min ratio.")
     manager.edit_config(
         target="running",
         config=f"""
@@ -87,7 +90,7 @@ def _update_rrm_policy_min_ratio(manager, value: int):
 @getattr(mark, "MVP-ARCH-INTF-5")
 @mark.timeout(180)
 def test_initial_configuration_written(config_path: Path, load_config):
-    """Ensure the adapter writes the initial configuration file."""
+    logger.info("Ensure the adapter writes the initial configuration file.")
     config = load_config()
     assert "cells" in config, "cells section not found in config"
     assert config["cells"], "no cells defined in config"
@@ -99,7 +102,7 @@ def test_initial_configuration_written(config_path: Path, load_config):
 @getattr(mark, "MVP-ARCH-INTF-5")
 @mark.timeout(240)
 def test_rendered_configuration_accepts_dryrun(dryrun_result):
-    """Ensure the rendered config can be loaded by the component in dry-run mode."""
+    logger.info("Ensure the rendered config can be loaded by the component in dry-run mode.")
     assert (
         dryrun_result["status_code"] == 0
     ), f"dry-run failed:\n{dryrun_result['logs']}"
@@ -110,7 +113,7 @@ def test_rendered_configuration_accepts_dryrun(dryrun_result):
 def test_runtime_ssb_update_sends_ws_command(
     netconf_manager, load_config, o1_adapter_base_url, wait_for
 ):
-    """Runtime SSB power change should update config without requiring a restart."""
+    logger.info("Runtime SSB power change should update config without requiring a restart.")
     session = requests.Session()
     config = load_config()
     initial_value = int(config["cells"][0]["ssb"]["ssb_block_power_dbm"])
@@ -145,7 +148,7 @@ def test_runtime_ssb_update_sends_ws_command(
 def test_non_runtime_change_triggers_restart_request(
     netconf_manager, load_config, o1_adapter_base_url, wait_for
 ):
-    """Changing non-runtime parameters should request a restart and update config."""
+    logger.info("Changing non-runtime parameters should request a restart and update config.")
     session = requests.Session()
     config = load_config()
     initial_pci = int(config["cells"][0]["pci"])
@@ -193,7 +196,7 @@ def test_non_runtime_change_triggers_restart_request(
 @getattr(mark, "MVP-SEC-O-DU-09")
 @mark.timeout(60)
 def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
-    """Connect to the O1 NETCONF endpoint over mutual TLS and verify the running config is fetchable."""
+    logger.info("Connect to the O1 NETCONF endpoint over mutual TLS and verify the running config is fetchable.")
     reply = tls_netconf_manager.get_config(source="running")
     xml = reply.data_xml
     assert xml and "<" in xml
@@ -203,7 +206,7 @@ def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
 @getattr(mark, "MVP-SEC-O-DU-04")
 @mark.timeout(60)
 def test_mplane_mtls(mock_ru_tls_manager):
-    """Mutual TLS to the RU's M-Plane endpoint; running config is fetchable."""
+    logger.info("Mutual TLS to the RU's M-Plane endpoint; running config is fetchable.")
     reply = mock_ru_tls_manager.get_config(source="running")
     assert reply.data_xml and "<" in reply.data_xml
 
@@ -211,7 +214,7 @@ def test_mplane_mtls(mock_ru_tls_manager):
 @getattr(mark, "MVP-SEC-O-DU-03b")
 @mark.timeout(60)
 def test_mplane_ssh(mock_ru_ssh_manager):
-    """NETCONF over SSH v2 to the RU's M-Plane endpoint; running config is fetchable."""
+    logger.info("NETCONF over SSH v2 to the RU's M-Plane endpoint; running config is fetchable.")
     reply = mock_ru_ssh_manager.get_config(source="running")
     assert reply.data_xml and "<" in reply.data_xml
 
@@ -219,7 +222,7 @@ def test_mplane_ssh(mock_ru_ssh_manager):
 @getattr(mark, "MVP-SEC-O-DU-05")
 @mark.timeout(60)
 def test_mplane_nacm_read_allowed(mock_ru_tls_manager):
-    """NACM permits read for the M-Plane client; get-config succeeds."""
+    logger.info("NACM permits read for the M-Plane client; get-config succeeds.")
     reply = mock_ru_tls_manager.get_config(source="running")
     assert reply.data_xml and "<" in reply.data_xml
 
@@ -227,7 +230,7 @@ def test_mplane_nacm_read_allowed(mock_ru_tls_manager):
 @getattr(mark, "MVP-SEC-O-DU-05")
 @mark.timeout(60)
 def test_mplane_nacm_write_denied(mock_ru_tls_manager):
-    """NACM denies write for the M-Plane client; edit-config returns access-denied."""
+    logger.info("NACM denies write for the M-Plane client; edit-config returns access-denied.")
     # clock-classes value must not already be in the loaded RU config — sysrepo
     # skips the NACM check when the merge produces no diff.
     with raises(RPCError) as exc_info:
@@ -258,7 +261,7 @@ def test_rrm_policy_ratio_update_sends_ws_command(
     read_ws_events,
     wait_for,
 ):
-    """Changing RRM policy ratios should emit a WS command without requiring a restart."""
+    logger.info("Changing RRM policy ratios should emit a WS command without requiring a restart.")
 
     if ws_event_log_path.exists():
         ws_event_log_path.unlink()

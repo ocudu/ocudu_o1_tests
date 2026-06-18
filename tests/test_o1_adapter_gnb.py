@@ -1,14 +1,17 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+import logging
 from pathlib import Path
 from pytest import mark
 
 import requests
 
+logger = logging.getLogger(__name__)
+
 
 def _update_ssb_block_power(manager, value: int):
-    """Send a NETCONF edit-config to update the SSB block power."""
+    logger.info("Send a NETCONF edit-config to update the SSB block power.")
     manager.edit_config(
         target="running",
         config=f"""
@@ -35,7 +38,7 @@ def _update_ssb_block_power(manager, value: int):
 
 
 def _update_cell_pci(manager, value: int):
-    """Send a NETCONF edit-config to update the NR PCI (nRPCI)."""
+    logger.info("Send a NETCONF edit-config to update the NR PCI (nRPCI).")
     manager.edit_config(
         target="running",
         config=f"""
@@ -58,7 +61,7 @@ def _update_cell_pci(manager, value: int):
 
 
 def _update_rrm_policy_min_ratio(manager, value: int):
-    """Send a NETCONF edit-config to update the RRM policy min ratio."""
+    logger.info("Send a NETCONF edit-config to update the RRM policy min ratio.")
     manager.edit_config(
         target="running",
         config=f"""
@@ -85,7 +88,7 @@ def _update_rrm_policy_min_ratio(manager, value: int):
 
 @mark.timeout(180)
 def test_initial_configuration_written(config_path: Path, load_config):
-    """Ensure the adapter writes the initial configuration file."""
+    logger.info("Ensure the adapter writes the initial configuration file.")
     config = load_config()
     assert "cells" in config, "cells section not found in config"
     assert config["cells"], "no cells defined in config"
@@ -96,7 +99,7 @@ def test_initial_configuration_written(config_path: Path, load_config):
 
 @mark.timeout(240)
 def test_rendered_configuration_accepts_dryrun(dryrun_result):
-    """Ensure the rendered config can be loaded by the component in dry-run mode."""
+    logger.info("Ensure the rendered config can be loaded by the component in dry-run mode.")
     assert dryrun_result["status_code"] == 0, (
         f"dry-run failed:\n{dryrun_result['logs']}"
     )
@@ -104,7 +107,7 @@ def test_rendered_configuration_accepts_dryrun(dryrun_result):
 
 @mark.timeout(60)
 def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
-    """Connect over mutual TLS and verify the running config is fetchable."""
+    logger.info("Connect over mutual TLS and verify the running config is fetchable.")
     reply = tls_netconf_manager.get_config(source="running")
     xml = reply.data_xml
     assert xml and "<" in xml
@@ -114,7 +117,7 @@ def test_netconf_over_tls_rfc_7589(tls_netconf_manager):
 def test_runtime_ssb_update_sends_ws_command(
     netconf_manager, load_config, o1_adapter_base_url, wait_for
 ):
-    """Runtime SSB power change should update config without requiring a restart."""
+    logger.info("Runtime SSB power change should update config without requiring a restart.")
     session = requests.Session()
     config = load_config()
     initial_value = int(config["cells"][0]["ssb"]["ssb_block_power_dbm"])
@@ -148,7 +151,7 @@ def test_runtime_ssb_update_sends_ws_command(
 def test_non_runtime_change_triggers_restart_request(
     netconf_manager, load_config, o1_adapter_base_url, wait_for
 ):
-    """Changing non-runtime parameters should request a restart and update config."""
+    logger.info("Changing non-runtime parameters should request a restart and update config.")
     session = requests.Session()
     config = load_config()
     initial_pci = int(config["cells"][0]["pci"])
@@ -200,7 +203,7 @@ def test_rrm_policy_ratio_update_sends_ws_command(
     read_ws_events,
     wait_for,
 ):
-    """Changing RRM policy ratios should emit a WS command without requiring a restart."""
+    logger.info("Changing RRM policy ratios should emit a WS command without requiring a restart.")
 
     if ws_event_log_path.exists():
         ws_event_log_path.unlink()
@@ -284,8 +287,7 @@ def _report_config_value(cfg: dict, report_cfg_id: int, leaf: str):
 @getattr(mark, "MVP-FUNC-SMO-17-1-a")
 @mark.timeout(240)
 def test_smo_closed_loop_changes_ho_threshold(run_smo_closed_loop):
-    """SMO closed-loop sets meas_trigger_quantity_threshold_db to -20 on
-    report_configs[report_cfg_id=3]. Non-runtime parameter — adapter requests a full restart."""
+    logger.info("SMO closed-loop sets meas_trigger_quantity_threshold_db to -20 on report_configs[report_cfg_id=3]. Non-runtime parameter — adapter requests a full restart.")
     run_smo_closed_loop(
         payload_file="set_ho_threshold.xml",
         runtime=False,
@@ -297,7 +299,7 @@ def test_smo_closed_loop_changes_ho_threshold(run_smo_closed_loop):
 @getattr(mark, "MVP-FUNC-SMO-17-1-b")
 @mark.timeout(240)
 def test_smo_closed_loop_changes_pci(run_smo_closed_loop):
-    """SMO closed-loop sets NRCellDU/nRPCI to 200. Non-runtime parameter — adapter requests a full restart."""
+    logger.info("SMO closed-loop sets NRCellDU/nRPCI to 200. Non-runtime parameter — adapter requests a full restart.")
     run_smo_closed_loop(
         payload_file="set_nrpci.xml",
         runtime=False,
@@ -309,8 +311,7 @@ def test_smo_closed_loop_changes_pci(run_smo_closed_loop):
 @getattr(mark, "MVP-FUNC-SMO-17-1-c")
 @mark.timeout(240)
 def test_smo_closed_loop_changes_ho_hysteresis(run_smo_closed_loop):
-    """SMO closed-loop sets hysteresis_db to 5 on report_configs[report_cfg_id=2].
-    Non-runtime parameter — adapter requests a full restart."""
+    logger.info("SMO closed-loop sets hysteresis_db to 5 on report_configs[report_cfg_id=2]. Non-runtime parameter — adapter requests a full restart.")
     run_smo_closed_loop(
         payload_file="set_hysteresis.xml",
         runtime=False,
@@ -322,8 +323,7 @@ def test_smo_closed_loop_changes_ho_hysteresis(run_smo_closed_loop):
 @getattr(mark, "MVP-FUNC-SMO-17-1-d")
 @mark.timeout(240)
 def test_smo_closed_loop_changes_time_to_trigger(run_smo_closed_loop):
-    """SMO closed-loop sets time_to_trigger_ms to 256 on report_configs[report_cfg_id=2].
-    Non-runtime parameter — adapter requests a full restart."""
+    logger.info("SMO closed-loop sets time_to_trigger_ms to 256 on report_configs[report_cfg_id=2]. Non-runtime parameter — adapter requests a full restart.")
     run_smo_closed_loop(
         payload_file="set_time_to_trigger.xml",
         runtime=False,
@@ -335,8 +335,7 @@ def test_smo_closed_loop_changes_time_to_trigger(run_smo_closed_loop):
 @getattr(mark, "MVP-FUNC-SMO-17-1-e")
 @mark.timeout(240)
 def test_smo_closed_loop_changes_ssb_tx_power(run_smo_closed_loop):
-    """SMO closed-loop sets ssb_block_power_dbm to -10. Runtime-updatable leaf:
-    adapter applies in place without restart."""
+    logger.info("SMO closed-loop sets ssb_block_power_dbm to -10. Runtime-updatable leaf: adapter applies in place without restart.")
     run_smo_closed_loop(
         payload_file="set_ssb_block_power.xml",
         runtime=True,
@@ -348,7 +347,7 @@ def test_smo_closed_loop_changes_ssb_tx_power(run_smo_closed_loop):
 @getattr(mark, "MVP-FUNC-SMO-17-1-f")
 @mark.timeout(240)
 def test_smo_closed_loop_changes_preamble_format(run_smo_closed_loop):
-    """SMO closed-loop sets prach_config_index to 100. Non-runtime parameter — adapter requests a full restart."""
+    logger.info("SMO closed-loop sets prach_config_index to 100. Non-runtime parameter — adapter requests a full restart.")
     run_smo_closed_loop(
         payload_file="set_prach_config_index.xml",
         runtime=False,
