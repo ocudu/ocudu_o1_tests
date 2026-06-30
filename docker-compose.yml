@@ -192,6 +192,11 @@ services:
       CONFIG_PATH: /tmp/config.yaml
       MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
       MOCK_SMO_EVENT_LOG: /tmp/mock_smo_events.jsonl
+      OCUDU_COMMIT: ${OCUDU_COMMIT:-}
+      NETCONF_COMMIT: ${NETCONF_COMMIT:-}
+      O1_ADAPTER_COMMIT: ${O1_ADAPTER_COMMIT:-}
+      CI_COMMIT_SHA: ${CI_COMMIT_SHA:-}
+      CI_JOB_URL: ${CI_JOB_URL:-}
       PYTEST_ADDOPTS: ${PYTEST_ADDOPTS:--vv test_o1_adapter_gnb.py}
     volumes:
       - shared-data:/tmp

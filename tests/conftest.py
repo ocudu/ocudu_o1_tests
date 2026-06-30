@@ -27,6 +27,16 @@ def pytest_collection_modifyitems(items):
         item.user_properties.append(("markers", ";".join(markers)))
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _junit_suite_properties(record_testsuite_property):
+    """Stamp CI provenance onto the JUnit <testsuite> (values forwarded from the host via docker-compose)."""
+    record_testsuite_property("ocudu_commit", os.getenv("OCUDU_COMMIT", ""))
+    record_testsuite_property("netconf_commit", os.getenv("NETCONF_COMMIT", ""))
+    record_testsuite_property("o1_adapter_commit", os.getenv("O1_ADAPTER_COMMIT", ""))
+    record_testsuite_property("test_commit", os.getenv("CI_COMMIT_SHA", ""))
+    record_testsuite_property("url", os.getenv("CI_JOB_URL", ""))
+
+
 def _wait_for(condition: Callable[[], Optional[object]], timeout: int = 120, interval: float = 1.0):
     """Wait until condition returns a truthy value or timeout expires."""
     deadline = time.time() + timeout
