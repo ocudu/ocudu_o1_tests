@@ -83,6 +83,11 @@ def main() -> int:
          "rev-parse", "HEAD"],
         text=True,
     ).strip()
+    adapter_sha = subprocess.check_output(
+        ["git", "-C", str(compose_dir / "ocudu_elements" / "ocudu_o1_adapter"),
+         "rev-parse", "HEAD"],
+        text=True,
+    ).strip()
 
     base_env = os.environ.copy()
     base_env.setdefault("O1_ADAPTER_WS_HOST", "ocudu-mock-gnb")
@@ -94,8 +99,23 @@ def main() -> int:
         "registry.gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf/netconf_amd64",
     )
     base_env["NETCONF_COMMIT"] = netconf_sha
+    base_env["O1_ADAPTER_COMMIT"] = adapter_sha
     base_env["NETCONF_CONFIGS_DIR"] = str(configs_dir.resolve())
     base_env["O1_ADAPTER_PROFILE"] = profile
+
+    # get used ocudu commit from spdx of the the yaml_validator container
+    base_env["OCUDU_COMMIT"] = ""
+    try:
+        namespace = subprocess.check_output(
+            ["docker", "compose", "-f", str(compose_file), "--profile", "test", "run",
+             "--rm", "--no-deps", "--entrypoint", "sh", "yaml_validator",
+             "-c", "grep -m1 '^DocumentNamespace:' /usr/local/share/ocudu.spdx"],
+            cwd=compose_dir, env=base_env, text=True, stderr=subprocess.DEVNULL,
+        )
+        if "ocudu-" in namespace:
+            base_env["OCUDU_COMMIT"] = namespace.rsplit("ocudu-", 1)[-1].strip()
+    except subprocess.CalledProcessError:
+        pass
 
     results_dir = os.environ.get("O1_TEST_RESULTS_DIR")
     if results_dir:
