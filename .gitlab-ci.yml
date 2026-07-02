@@ -21,6 +21,9 @@ include:
     file: .gitlab/ci-shared/static.yml
   - project: $[[ inputs.ocudu_path ]]
     ref: $[[ inputs.ocudu_ref ]]
+    file: .gitlab/ci-shared/docker.yml
+  - project: $[[ inputs.ocudu_path ]]
+    ref: $[[ inputs.ocudu_ref ]]
     file: .gitlab/ci-shared/gitlab_settings/.gitlab-ci.yml
     inputs:
       ocudu_path: $[[ inputs.ocudu_path ]]
@@ -41,32 +44,6 @@ stages:
         - ocudu_elements/ocudu_netconf
         - ocudu_elements/ocudu_o1_adapter
 
-.docker compose:
-  stage: compose
-  image: docker:24.0.7-dind
-  tags:
-    - ${OCUDU_RUNNER_TAG}-amd64
-  timeout: 2h
-  retry: 2
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-  before_script: &docker_setup
-    - |
-      export DOCKER_HOST=unix:///var/run/docker.sock
-      export DOCKER_TLS_CERTDIR=""
-      dockerd-entrypoint.sh --host=${DOCKER_HOST} --tls=false 2>&1 &
-    - |
-      i=0
-      while ! docker info >/dev/null 2>&1; do
-        i=$((i+1))
-        if [ "$i" -ge 60 ]; then
-          echo "ERROR: dockerd not ready after 60s"
-          exit 1
-        fi
-        sleep 1
-      done
-    - apk add --no-cache git python3
-
 headers:
   stage: ci
   extends: .headers
@@ -75,6 +52,10 @@ headers:
 
 o1 integration tests:
   extends: .docker compose
+  timeout: 2h
+  retry: 2
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
   parallel:
     matrix:
       - PROFILE: [gnb, cu, cucp, cuup, du]
@@ -89,6 +70,7 @@ o1 integration tests:
       changes:
         <<: *o1_test_changes
   script:
+    - apk add --no-cache git python3
     - |
       if [ -n "${O1_TESTS_UPSTREAM_COMPONENT:-}" ]; then
         case "$O1_TESTS_UPSTREAM_COMPONENT" in
