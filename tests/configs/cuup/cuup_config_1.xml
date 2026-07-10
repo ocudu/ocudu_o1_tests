@@ -75,6 +75,11 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <vlanId>0</vlanId>
         </localAddress>
         <!-- no remoteAddress: the F1-U peer is learned via F1AP signaling -->
+        <!-- f1u GTP-U bind/peer UDP ports (default 2152 per TS 29.281) -->
+        <ocudu_ep_f1u_extensions xmlns="urn:ocudu-gnbcuupfunction-extension:1.0">
+          <bind_port>2152</bind_port>
+          <peer_port>2152</peer_port>
+        </ocudu_ep_f1u_extensions>
       </attributes>
     </EP_F1U>
 
@@ -116,6 +121,25 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <enable>false</enable>
         </f1u>
       </ocudu_pcap_extensions>
+
+      <ocudu_remote_control_extensions>
+        <enabled>true</enabled>
+        <bind_addr>0.0.0.0</bind_addr>
+        <port>8001</port>
+      </ocudu_remote_control_extensions>
+
+      <ocudu_gnbcuupfunction_testmode_extensions>
+        <enable>false</enable>
+        <integrity_enable>true</integrity_enable>
+        <ciphering_enable>true</ciphering_enable>
+        <nea_algo>2</nea_algo>
+        <nia_algo>2</nia_algo>
+        <ue_ambr>40000000000</ue_ambr>
+        <attach_detach_period>0</attach_detach_period>
+        <reestablish_period>0</reestablish_period>
+        <f1u_peer_address>127.0.10.2</f1u_peer_address>
+        <nof_ues>1</nof_ues>
+      </ocudu_gnbcuupfunction_testmode_extensions>
     </ocudu_gnbcuupfunction_extensions>
   </GNBCUUPFunction>
 </ManagedElement>

@@ -62,13 +62,13 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
         </pLMNInfoList>
         <nPNIdentityList>
           <idx>0</idx>
-          <plmnid>
+          <plmnId>
             <mcc>001</mcc>
             <mnc>01</mnc>
-          </plmnid>
-          <cAGIdList>unused</cAGIdList>
-          <nIDList>unused</nIDList>
+          </plmnId>
         </nPNIdentityList>
+        <redCapAccessCriteriaRef>RedCapAccessCriteria=unused</redCapAccessCriteriaRef>
+        <nTNTAClist>7</nTNTAClist>
         <nRPCI>1</nRPCI>
         <nRTAC>7</nRTAC>
         <arfcnDL>640000</arfcnDL>
@@ -134,10 +134,154 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             <ocudu_nrcelldu_prach_extensions>
               <prach_config_index>159</prach_config_index>
               <prach_root_sequence_index>1</prach_root_sequence_index>
+              <zero_correlation_zone>1</zero_correlation_zone>
+              <fixed_msg3_mcs>4</fixed_msg3_mcs>
+              <max_msg3_harq_retx>3</max_msg3_harq_retx>
+              <total_nof_ra_preambles>56</total_nof_ra_preambles>
+              <cfra_enabled>true</cfra_enabled>
+              <prach_frequency_start>12</prach_frequency_start>
+              <preamble_rx_target_pw>-110</preamble_rx_target_pw>
+              <preamble_trans_max>10</preamble_trans_max>
+              <power_ramping_step_db>2</power_ramping_step_db>
+              <ports>0</ports>
+              <ports>1</ports>
+              <nof_ssb_per_ro>1</nof_ssb_per_ro>
+              <nof_cb_preambles_per_ssb>48</nof_cb_preambles_per_ssb>
+              <ra_resp_window>20</ra_resp_window>
+              <nof_prach_guardbands_rbs>2</nof_prach_guardbands_rbs>
             </ocudu_nrcelldu_prach_extensions>
+            <ocudu_nrcelldu_tdd_extensions>
+              <dl_ul_tx_period>5</dl_ul_tx_period>
+              <nof_dl_slots>3</nof_dl_slots>
+              <nof_dl_symbols>6</nof_dl_symbols>
+              <nof_ul_slots>1</nof_ul_slots>
+              <nof_ul_symbols>4</nof_ul_symbols>
+            </ocudu_nrcelldu_tdd_extensions>
+            <ocudu_nrcelldu_mac_cell_group_extensions>
+              <bsr_cfg>
+                <periodic_bsr_timer>10</periodic_bsr_timer>
+                <retx_bsr_timer>80</retx_bsr_timer>
+              </bsr_cfg>
+              <phr_cfg>
+                <phr_prohibit_timer>10</phr_prohibit_timer>
+              </phr_cfg>
+              <sr_cfg>
+                <sr_trans_max>64</sr_trans_max>
+              </sr_cfg>
+            </ocudu_nrcelldu_mac_cell_group_extensions>
+            <ocudu_nrcelldu_sib_extensions>
+              <si_window_length>160</si_window_length>
+              <t300>1000</t300>
+              <t301>1000</t301>
+              <t310>1000</t310>
+              <n310>1</n310>
+              <t311>3000</t311>
+              <n311>1</n311>
+              <t319>1000</t319>
+              <etws>
+                <message_id>4356</message_id>
+                <serial_num>1288</serial_num>
+                <warning_type>2432</warning_type>
+                <data_coding_scheme>0</data_coding_scheme>
+              </etws>
+              <cmas>
+                <message_id>4370</message_id>
+                <serial_num>12291</serial_num>
+                <data_coding_scheme>0</data_coding_scheme>
+              </cmas>
+            </ocudu_nrcelldu_sib_extensions>
             <ocudu_nrcelldu_pdsch_extensions>
-              <mcs_table>qam64</mcs_table>
+              <mcs_table>qam256</mcs_table>
+              <olla_target_bler>0.05</olla_target_bler>
+              <dc_offset>center</dc_offset>
             </ocudu_nrcelldu_pdsch_extensions>
+            <ocudu_nrcelldu_pusch_extensions>
+              <mcs_table>qam256</mcs_table>
+              <olla_target_bler>0.05</olla_target_bler>
+              <olla_snr_inc_step>0.05</olla_snr_inc_step>
+              <olla_max_snr_offset>30</olla_max_snr_offset>
+              <p0_nominal_with_grant>-76</p0_nominal_with_grant>
+              <min_k2>2</min_k2>
+            </ocudu_nrcelldu_pusch_extensions>
+            <ocudu_nrcelldu_pucch_extensions>
+              <sr_period_ms>20</sr_period_ms>
+              <min_k1>2</min_k1>
+              <p0_nominal>-90</p0_nominal>
+              <pucch_resource_common>11</pucch_resource_common>
+              <formats>f1_and_f2</formats>
+              <resource_set_size>8</resource_set_size>
+              <nof_cell_res_set_configs>2</nof_cell_res_set_configs>
+              <nof_cell_sr_res>8</nof_cell_sr_res>
+              <nof_cell_csi_res>8</nof_cell_csi_res>
+              <f0_intraslot_freq_hop>false</f0_intraslot_freq_hop>
+              <f1_enable_occ>false</f1_enable_occ>
+              <f1_nof_cyclic_shifts>2</f1_nof_cyclic_shifts>
+              <f1_intraslot_freq_hop>false</f1_intraslot_freq_hop>
+              <f2_max_nof_rbs>1</f2_max_nof_rbs>
+              <f2_max_code_rate>dot35</f2_max_code_rate>
+              <f2_intraslot_freq_hop>false</f2_intraslot_freq_hop>
+              <f3_max_nof_rbs>1</f3_max_nof_rbs>
+              <f3_max_code_rate>dot35</f3_max_code_rate>
+              <f3_intraslot_freq_hop>false</f3_intraslot_freq_hop>
+              <f3_additional_dmrs>false</f3_additional_dmrs>
+              <f3_pi2_bpsk>false</f3_pi2_bpsk>
+              <f4_max_code_rate>dot35</f4_max_code_rate>
+              <f4_intraslot_freq_hop>false</f4_intraslot_freq_hop>
+              <f4_additional_dmrs>false</f4_additional_dmrs>
+              <f4_pi2_bpsk>false</f4_pi2_bpsk>
+              <f4_occ_length>2</f4_occ_length>
+              <f4_enable_occ>false</f4_enable_occ>
+              <max_consecutive_kos>100</max_consecutive_kos>
+              <enable_cl_loop_pw_control>false</enable_cl_loop_pw_control>
+              <target_sinr_f0>10.0</target_sinr_f0>
+              <target_sinr_f2>6.0</target_sinr_f2>
+              <target_sinr_f3>1.0</target_sinr_f3>
+            </ocudu_nrcelldu_pucch_extensions>
+            <ocudu_nrcelldu_pdcch_extensions>
+              <common>
+                <ss1_n_candidates>[0, 0, 2, 0, 0]</ss1_n_candidates>
+                <ss0_index>0</ss0_index>
+              </common>
+              <dedicated>
+                <coreset1_rb_start>1</coreset1_rb_start>
+                <ss2_n_candidates>[0, 0, 0, 0, 0]</ss2_n_candidates>
+                <dci_format_0_1_and_1_1>true</dci_format_0_1_and_1_1>
+                <ss2_type>ue_dedicated</ss2_type>
+                <al_cqi_offset>0</al_cqi_offset>
+              </dedicated>
+            </ocudu_nrcelldu_pdcch_extensions>
+            <ocudu_nrcelldu_csi_extensions>
+              <csi_rs_period>40</csi_rs_period>
+              <csi_rs_enabled>true</csi_rs_enabled>
+              <pwr_ctrl_offset>0</pwr_ctrl_offset>
+              <report_type>periodic</report_type>
+            </ocudu_nrcelldu_csi_extensions>
+            <ocudu_nrcelldu_srs_extensions>
+              <period_ms>80</period_ms>
+              <type_enabled>disabled</type_enabled>
+              <max_nof_sym_per_slot>2</max_nof_sym_per_slot>
+              <nof_sym_per_resource>1</nof_sym_per_resource>
+              <c_srs>0</c_srs>
+              <freq_domain_shift>0</freq_domain_shift>
+              <tx_comb>4</tx_comb>
+              <cyclic_shift_reuse>1</cyclic_shift_reuse>
+              <sequence_id_reuse>1</sequence_id_reuse>
+            </ocudu_nrcelldu_srs_extensions>
+            <ocudu_nrcelldu_paging_extensions>
+              <pg_search_space_id>1</pg_search_space_id>
+              <default_pg_cycle_in_rf>128</default_pg_cycle_in_rf>
+              <nof_pf_per_paging_cycle>oneT</nof_pf_per_paging_cycle>
+              <pf_offset>0</pf_offset>
+              <nof_po_per_pf>1</nof_po_per_pf>
+              <edrx_enabled>false</edrx_enabled>
+            </ocudu_nrcelldu_paging_extensions>
+            <ocudu_nrcelldu_drx_extensions>
+              <on_duration_timer>10</on_duration_timer>
+              <inactivity_timer>0</inactivity_timer>
+              <retx_timer_dl>0</retx_timer_dl>
+              <retx_timer_ul>0</retx_timer_ul>
+              <long_cycle>0</long_cycle>
+            </ocudu_nrcelldu_drx_extensions>
           </ocudu_nrcelldu_extensions>
       </attributes>
     </NRCellDU>
@@ -231,7 +375,9 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <ipAddress>10.11.12.112</ipAddress>
           <vlanId>100</vlanId>
         </localAddress>
-        <!-- f1c connect ip4v/ipv6 address -->
+        <!-- f1c connect address (the gNB-CU-CP). An IPv4/IPv6 literal, or in Kubernetes
+             a DNS service name that the O1 adapter resolves before writing the gNB
+             config, e.g.: <remoteAddress>cucp.default.svc.cluster.local</remoteAddress> -->
         <remoteAddress>10.11.12.113</remoteAddress>
       </attributes>
     </EP_F1C>
@@ -244,10 +390,33 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <vlanId>101</vlanId>
         </localAddress>
         <!-- no remoteAddress: the F1-U peer is learned via F1AP signaling -->
+        <!-- f1u GTP-U bind/peer UDP ports (default 2152 per TS 29.281) -->
+        <ocudu_ep_f1u_extensions xmlns="urn:ocudu-gnbdufunction-extension:1.0">
+          <bind_port>2152</bind_port>
+          <peer_port>2152</peer_port>
+        </ocudu_ep_f1u_extensions>
       </attributes>
     </EP_F1U>
 
     <ocudu_gnbdufunction_extensions xmlns="urn:ocudu-gnbdufunction-extension:1.0">
+      <ocudu_ru_sdr_extensions>
+        <device_driver>uhd</device_driver>
+        <device_args>type=b200,num_recv_frames=64,num_send_frames=64</device_args>
+        <srate>23.040</srate>
+        <otw_format>sc12</otw_format>
+        <tx_gain>80.0</tx_gain>
+        <rx_gain>40.0</rx_gain>
+        <clock>internal</clock>
+        <sync>internal</sync>
+        <amplitude_control>
+          <enable_clipping>false</enable_clipping>
+          <tx_gain_backoff>12.0</tx_gain_backoff>
+        </amplitude_control>
+      </ocudu_ru_sdr_extensions>
+      <ocudu_ru_dummy_extensions>
+        <dl_processing_delay>1</dl_processing_delay>
+        <time_scaling>1.0</time_scaling>
+      </ocudu_ru_dummy_extensions>
       <ocudu_gnbdufunction_testmode_extensions>
         <enabled>true</enabled>
         <rnti>44</rnti>
@@ -263,11 +432,31 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
       </ocudu_log_extensions>
       <ocudu_hal_extensions>
         <eal_args>--lcores (0-1)@(0-11)</eal_args>
+        <bbdev_hwacc>
+          <hwacc_type>acc100</hwacc_type>
+          <id>0</id>
+          <msg_mbuf_size>32768</msg_mbuf_size>
+          <rm_mbuf_size>3000</rm_mbuf_size>
+          <nof_mbuf>1024</nof_mbuf>
+          <pdsch_enc>
+            <nof_hwacc>4</nof_hwacc>
+            <cb_mode>true</cb_mode>
+            <max_buffer_size>65536</max_buffer_size>
+            <dedicated_queue>true</dedicated_queue>
+          </pdsch_enc>
+          <pusch_dec>
+            <nof_hwacc>4</nof_hwacc>
+            <harq_context_size>1048576</harq_context_size>
+            <force_local_harq>false</force_local_harq>
+            <dedicated_queue>true</dedicated_queue>
+          </pusch_dec>
+        </bbdev_hwacc>
       </ocudu_hal_extensions>
 
       <ocudu_remote_control_extensions>
         <enabled>true</enabled>
         <bind_addr>0.0.0.0</bind_addr>
+        <port>8001</port>
       </ocudu_remote_control_extensions>
 
       <ocudu_metrics_extensions>

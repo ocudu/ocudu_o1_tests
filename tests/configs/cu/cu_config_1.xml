@@ -30,6 +30,29 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             <mnc>01</mnc>
           </pLMNTarget>
         </qceIdMappingInfoList>
+        <mappingSetIDBackhaulAddressList>
+          <idx>0</idx>
+          <setId>0</setId>
+          <backhaulAddress>
+            <gNBId>1</gNBId>
+            <tAI>
+              <plmnId>
+                <mcc>001</mcc>
+                <mnc>01</mnc>
+              </plmnId>
+              <tac>0007</tac>
+            </tAI>
+          </backhaulAddress>
+        </mappingSetIDBackhaulAddressList>
+        <tceIDMappingInfoList>
+          <idx>0</idx>
+          <tceIPAddress>0.0.0.0</tceIPAddress>
+          <tceID>0</tceID>
+          <pLMNTarget>
+            <mcc>001</mcc>
+            <mnc>01</mnc>
+          </pLMNTarget>
+        </tceIDMappingInfoList>
       </attributes>
 
       <RRMPolicyRatio xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-rrmpolicy">
@@ -82,6 +105,8 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <attributes>
             <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
             <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu2</adjacentNRCellRef>
+            <isENDCAllowed>false</isENDCAllowed>
+            <isMLBAllowed>true</isMLBAllowed>
             <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
               <report_config_refs>2</report_config_refs>
               <report_config_refs>3</report_config_refs>
@@ -95,6 +120,8 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <attributes>
             <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
             <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu3</adjacentNRCellRef>
+            <isENDCAllowed>false</isENDCAllowed>
+            <isMLBAllowed>true</isMLBAllowed>
             <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
               <report_config_refs>2</report_config_refs>
             </ocudu_nrcellrelation_mobility_extensions>
@@ -121,6 +148,8 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <attributes>
             <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
             <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu1</adjacentNRCellRef>
+            <isENDCAllowed>false</isENDCAllowed>
+            <isMLBAllowed>true</isMLBAllowed>
             <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
               <report_config_refs>2</report_config_refs>
             </ocudu_nrcellrelation_mobility_extensions>
@@ -131,6 +160,8 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <attributes>
             <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
             <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu3</adjacentNRCellRef>
+            <isENDCAllowed>false</isENDCAllowed>
+            <isMLBAllowed>true</isMLBAllowed>
             <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
               <report_config_refs>2</report_config_refs>
             </ocudu_nrcellrelation_mobility_extensions>
@@ -157,6 +188,8 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <attributes>
             <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
             <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu1</adjacentNRCellRef>
+            <isENDCAllowed>false</isENDCAllowed>
+            <isMLBAllowed>true</isMLBAllowed>
             <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
               <report_config_refs>2</report_config_refs>
             </ocudu_nrcellrelation_mobility_extensions>
@@ -167,6 +200,8 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <attributes>
             <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
             <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu2</adjacentNRCellRef>
+            <isENDCAllowed>false</isENDCAllowed>
+            <isMLBAllowed>true</isMLBAllowed>
             <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
               <report_config_refs>2</report_config_refs>
             </ocudu_nrcellrelation_mobility_extensions>
@@ -240,6 +275,22 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             <vlanId>0</vlanId>
           </localAddress>
           <remoteAddress>10.53.1.2</remoteAddress>
+          <!-- ng-c AMF SCTP port (default 38412 per TS 38.412) -->
+          <ocudu_ep_ngc_extensions xmlns="urn:ocudu-gnbcucpfunction-extension:1.0">
+            <port>38412</port>
+            <bind_interface>auto</bind_interface>
+            <no_core>false</no_core>
+            <amf_reconnection_retry_time>1000</amf_reconnection_retry_time>
+            <procedure_timeout>5000</procedure_timeout>
+            <sctp_rto_initial>120</sctp_rto_initial>
+            <sctp_rto_min>120</sctp_rto_min>
+            <sctp_rto_max>500</sctp_rto_max>
+            <sctp_init_max_attempts>3</sctp_init_max_attempts>
+            <sctp_max_init_timeo>500</sctp_max_init_timeo>
+            <sctp_hb_interval>30000</sctp_hb_interval>
+            <sctp_assoc_max_retx>10</sctp_assoc_max_retx>
+            <sctp_nodelay>false</sctp_nodelay>
+          </ocudu_ep_ngc_extensions>
         </attributes>
       </EP_NgC>
 
@@ -251,7 +302,8 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             <ipAddress>127.0.10.1</ipAddress>
             <vlanId>0</vlanId>
           </localAddress>
-          <!-- no remoteAddress: CU-CP is the F1-C server (bind only); the connect address is on the DU -->
+          <!-- No remoteAddress: the CU-CP terminates F1-C as a server (bind only).
+               The F1-C connect address is configured on the gNB-DU's EP_F1C. -->
         </attributes>
       </EP_F1C>
 
@@ -295,6 +347,12 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             <enable>false</enable>
           </e1ap>
         </ocudu_pcap_extensions>
+
+        <ocudu_remote_control_extensions>
+          <enabled>true</enabled>
+          <bind_addr>0.0.0.0</bind_addr>
+          <port>8001</port>
+        </ocudu_remote_control_extensions>
       </ocudu_gnbcucpfunction_extensions>
   </GNBCUCPFunction>
 
@@ -350,6 +408,11 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <vlanId>0</vlanId>
         </localAddress>
         <!-- no remoteAddress: the F1-U peer is learned via F1AP signaling -->
+        <!-- f1u GTP-U bind/peer UDP ports (default 2152 per TS 29.281) -->
+        <ocudu_ep_f1u_extensions xmlns="urn:ocudu-gnbcuupfunction-extension:1.0">
+          <bind_port>2152</bind_port>
+          <peer_port>2152</peer_port>
+        </ocudu_ep_f1u_extensions>
       </attributes>
     </EP_F1U>
 
@@ -380,6 +443,19 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
           <enable>false</enable>
         </f1u>
       </ocudu_pcap_extensions>
+
+      <ocudu_gnbcuupfunction_testmode_extensions>
+        <enable>false</enable>
+        <integrity_enable>true</integrity_enable>
+        <ciphering_enable>true</ciphering_enable>
+        <nea_algo>2</nea_algo>
+        <nia_algo>2</nia_algo>
+        <ue_ambr>40000000000</ue_ambr>
+        <attach_detach_period>0</attach_detach_period>
+        <reestablish_period>0</reestablish_period>
+        <f1u_peer_address>127.0.10.2</f1u_peer_address>
+        <nof_ues>1</nof_ues>
+      </ocudu_gnbcuupfunction_testmode_extensions>
     </ocudu_gnbcuupfunction_extensions>
   </GNBCUUPFunction>
 </ManagedElement>
