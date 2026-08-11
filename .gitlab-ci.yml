@@ -44,6 +44,44 @@ stages:
         - ocudu_elements/ocudu_netconf
         - ocudu_elements/ocudu_o1_adapter
 
+.profile-matrix: &profile_matrix
+  matrix:
+    - PROFILE: [gnb, cu, cucp, cuup, du]
+
+.yang-gate:
+  - changes: &yang_gate_changes
+      paths:
+        - .gitlab-ci.yml
+        - docker-compose.yml
+        - run_yang_gate.py
+        - mocks/odl_yang_gate/**/*
+        - ocudu_elements/ocudu_netconf
+
+# Both jobs may be handed an upstream component SHA by a triggering pipeline, so
+# they resolve the submodule the same way.
+.checkout-upstream-component: &checkout_upstream_component |
+  if [ -n "${O1_TESTS_UPSTREAM_COMPONENT:-}" ]; then
+    case "$O1_TESTS_UPSTREAM_COMPONENT" in
+      ocudu_netconf)
+        SUBMODULE_PATH="ocudu_elements/ocudu_netconf"
+        ;;
+      ocudu_o1_adapter)
+        SUBMODULE_PATH="ocudu_elements/ocudu_o1_adapter"
+        ;;
+      *)
+        echo "Unsupported upstream component: $O1_TESTS_UPSTREAM_COMPONENT"
+        exit 1
+        ;;
+    esac
+
+    echo "Testing $O1_TESTS_UPSTREAM_COMPONENT from $O1_TESTS_UPSTREAM_PROJECT_PATH"
+    echo "SHA: $O1_TESTS_UPSTREAM_SHA"
+    git -C "$SUBMODULE_PATH" remote set-url origin "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${O1_TESTS_UPSTREAM_PROJECT_PATH}.git"
+    git -C "$SUBMODULE_PATH" fetch --no-tags origin "$O1_TESTS_UPSTREAM_SHA"
+    test "$(git -C "$SUBMODULE_PATH" rev-parse FETCH_HEAD)" = "$O1_TESTS_UPSTREAM_SHA"
+    git -C "$SUBMODULE_PATH" checkout --detach "$O1_TESTS_UPSTREAM_SHA"
+  fi
+
 headers:
   stage: ci
   extends: .headers
@@ -56,11 +94,9 @@ o1 integration tests:
   retry: 2
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
-  parallel:
-    matrix:
-      - PROFILE: [gnb, cu, cucp, cuup, du]
+  parallel: *profile_matrix
   rules:
-    # Synchronization nightly run on dev — gates promotion of dev -> main; additionally runs nightly on main 
+    # Synchronization nightly run on dev — gates promotion of dev -> main; additionally runs nightly on main
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly|Synchronization/
     # Upstream-triggered pointer bump: run for signal, but do not block the bump
     - if: $CI_PIPELINE_SOURCE == "pipeline"
@@ -71,28 +107,7 @@ o1 integration tests:
         <<: *o1_test_changes
   script:
     - apk add --no-cache git python3
-    - |
-      if [ -n "${O1_TESTS_UPSTREAM_COMPONENT:-}" ]; then
-        case "$O1_TESTS_UPSTREAM_COMPONENT" in
-          ocudu_netconf)
-            SUBMODULE_PATH="ocudu_elements/ocudu_netconf"
-            ;;
-          ocudu_o1_adapter)
-            SUBMODULE_PATH="ocudu_elements/ocudu_o1_adapter"
-            ;;
-          *)
-            echo "Unsupported upstream component: $O1_TESTS_UPSTREAM_COMPONENT"
-            exit 1
-            ;;
-        esac
-
-        echo "Testing $O1_TESTS_UPSTREAM_COMPONENT from $O1_TESTS_UPSTREAM_PROJECT_PATH"
-        echo "SHA: $O1_TESTS_UPSTREAM_SHA"
-        git -C "$SUBMODULE_PATH" remote set-url origin "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${O1_TESTS_UPSTREAM_PROJECT_PATH}.git"
-        git -C "$SUBMODULE_PATH" fetch --no-tags origin "$O1_TESTS_UPSTREAM_SHA"
-        test "$(git -C "$SUBMODULE_PATH" rev-parse FETCH_HEAD)" = "$O1_TESTS_UPSTREAM_SHA"
-        git -C "$SUBMODULE_PATH" checkout --detach "$O1_TESTS_UPSTREAM_SHA"
-      fi
+    - *checkout_upstream_component
     - mkdir -p artifacts
     - export O1_TEST_RESULTS_DIR="${CI_PROJECT_DIR}/artifacts"
     - python3 run_tests.py "$PROFILE"
@@ -106,6 +121,31 @@ o1 integration tests:
       - ${CI_JOB_ID}_xunit.xml
       - artifacts/config_*.yaml
     expire_in: 5 days
+
+
+# Rationale in mocks/odl_yang_gate/odl_yang_gate.py. Needs only the netconf
+# container, so unlike `o1 integration tests` it is cheap enough to block a merge
+# request, and it deliberately does NOT allow_failure on an upstream pointer bump:
+# a mount-breaking YANG change is exactly what must not land.
+odl yang compatibility:
+  extends: .docker compose
+  timeout: 30m
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  parallel: *profile_matrix
+  rules:
+    - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly|Synchronization/
+    # Only ocudu_netconf can change the outcome: the advertised module set comes
+    # from the netconf image alone, so an adapter bump would re-run an identical
+    # input for zero signal.
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $O1_TESTS_UPSTREAM_COMPONENT == "ocudu_netconf"
+    - if: $ON_MR
+      changes:
+        <<: *yang_gate_changes
+  script:
+    - apk add --no-cache git python3
+    - *checkout_upstream_component
+    - python3 run_yang_gate.py "$PROFILE"
 
 update submodule pointer:
   stage: compose

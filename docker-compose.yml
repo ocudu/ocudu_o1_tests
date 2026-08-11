@@ -1,6 +1,12 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+x-netconf-client-env: &netconf_client_env
+  NETCONF_HOST: ocudu-netconf
+  NETCONF_PORT: "830"
+  NETCONF_USERNAME: root
+  NETCONF_PASSWORD: root
+
 services:
 
   netconf:
@@ -121,15 +127,12 @@ services:
       dockerfile: Dockerfile
     container_name: ocudu-mock-smo
     environment:
+      <<: *netconf_client_env
       MOCK_SMO_PORT: "9560"
       MOCK_SMO_EVENT_LOG: /tmp/mock_smo_events.jsonl
       MOCK_SMO_TRIGGER_AFTER: ${MOCK_SMO_TRIGGER_AFTER:-3}
       MOCK_SMO_EDIT_PAYLOAD_FILE: ${MOCK_SMO_EDIT_PAYLOAD_FILE:-}
       MOCK_SMO_LOGLEVEL: INFO
-      NETCONF_HOST: ocudu-netconf
-      NETCONF_PORT: "830"
-      NETCONF_USERNAME: root
-      NETCONF_PASSWORD: root
     depends_on:
       netconf:
         condition: service_started
@@ -157,6 +160,32 @@ services:
       - ./mocks/yaml_validator/dryrun.sh:/opt/yaml_validator/dryrun.sh:ro
     profiles: ["test"]
 
+  # Rebuilds the netconf server's advertised module set with OpenDaylight's YANG
+  # parser; see mocks/odl_yang_gate/odl_yang_gate.py for why that catches what
+  # libyang cannot. Driven per profile by run_yang_gate.py. Kept out of the "test"
+  # profile because it needs nothing but the netconf container.
+  odl_yang_gate:
+    image: ocudu/odl_yang_gate:latest
+    build:
+      context: ./mocks/odl_yang_gate
+      dockerfile: Dockerfile
+    environment:
+      <<: *netconf_client_env
+      O1_ADAPTER_PROFILE: ${O1_ADAPTER_PROFILE:-gnb}
+    depends_on:
+      netconf:
+        condition: service_started
+    volumes:
+      # The gate's logic and its baseline are policy, not toolchain: mount them
+      # so a stale :latest image can never enforce a previous checkout's baseline
+      # while reporting green. Only the JVM and the pinned jars come from the image.
+      - ./mocks/odl_yang_gate/odl_yang_gate.py:/opt/odl_yang_gate/odl_yang_gate.py:ro
+      - ./mocks/odl_yang_gate/known_failures.yaml:/opt/odl_yang_gate/known_failures.yaml:ro
+    # No fixed address: it only ever dials out to the netconf container by name.
+    networks:
+      - smo
+    profiles: ["yang-gate"]
+
   o1_tests:
     image: ocudu/o1_tests:latest
     build:
@@ -177,10 +206,7 @@ services:
       mock_smo:
         condition: service_started
     environment:
-      NETCONF_HOST: ocudu-netconf
-      NETCONF_PORT: "830"
-      NETCONF_USERNAME: root
-      NETCONF_PASSWORD: root
+      <<: *netconf_client_env
       NETCONF_TLS_PORT: "6513"
       NETCONF_TLS_CERT_DIR: /etc/netconf-tls-client
       MOCK_RU_HOST: ocudu-mock-ru

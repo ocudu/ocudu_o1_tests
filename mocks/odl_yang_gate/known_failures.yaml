@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Modules the device advertises that OpenDaylight's parser rejects today.
+#
+# These are tolerated, not forgiven: ODL drops each one (and anything importing
+# it) from the mount, so every entry is real lost functionality. An entry earns
+# its place only by being a defect in a third-party module we do not author --
+# anything we can fix, we fix instead of listing.
+#
+# The gate keeps this file honest in both directions. A module that starts
+# failing without an entry here fails the job; an entry that starts parsing
+# cleanly also fails the job, so the list cannot quietly rot. Modules that fail
+# only because they import a source the server refuses to serve are NOT listed --
+# the gate derives those from the import graph on every run.
+#
+# Not every module is advertised by every profile, so entries that the profile
+# under test does not advertise are simply ignored.
+
+# Module families the device is mounted *for*. Nothing matching these may be
+# baselined, unserved, or collateral damage of an unavailable import -- if one is,
+# the job fails instead. Globs, so a new in-house family is one line here rather
+# than a code change. These are exactly the modules we author: the 3GPP NRM the O1
+# interface exposes, and our own augments of it, which gain leaves routinely and
+# are therefore the likeliest thing to break.
+must_mount:
+  - "_3gpp-*"
+  - "*-extensions"
+
+known_failures:
+  netopeer-notifications: >-
+    netopeer2's own module augments ietf-netconf-monitoring with a mandatory
+    `session-type` leaf, which RFC 7950 section 7.17 forbids across module
+    boundaries. libyang accepts it, YangTools rejects the augment. Upstream
+    netopeer2 defect; nothing in this repo authors or installs it directly.
+
+  o-ran-uplane-conf: >-
+    O-RAN WG4's module has a `unique` statement pointing at a descendant
+    `fs-offset` node that does not exist, which YangTools rejects while libyang
+    ignores. Upstream O-RAN bundle defect; fixing it means patching the vendored
+    model or bumping the bundle.

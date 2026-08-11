@@ -64,6 +64,22 @@ After the run, `log/` contains, per iteration, the JUnit report `out_<profile>_<
 See [`ocudu_elements/ocudu_netconf/README.md`](ocudu_elements/ocudu_netconf/README.md) for the netconf container's `--enable-tls` flag, the dual-mode cert dir behavior, and the `cert-to-name` mapping that turns a client cert's CN into the NETCONF username.
 
 
+# Checking ODL/SDNR YANG compatibility
+
+OpenDaylight's YANG parser is stricter than libyang's, so the netconf server can boot clean and still lose whole subtrees when SDNR mounts it — which is how the 3GPP NRM tree went missing from ODLUX in July 2026. `run_yang_gate.py` catches that class of regression without booting the SMO:
+
+```bash
+$ ./run_yang_gate.py            # all profiles
+$ ./run_yang_gate.py gnb du     # or just some
+```
+
+Per profile it starts only the netconf container, then has [`mocks/odl_yang_gate/`](mocks/odl_yang_gate/) read the module set the server advertises, fetch each source over `get-schema`, and rebuild it with the YangTools release the SDNC image ships. `yanglint` cannot replace this — it *is* libyang, so it cannot see where libyang and ODL disagree. See the docstring in [`odl_yang_gate.py`](mocks/odl_yang_gate/odl_yang_gate.py) for why, and for what the gate asserts.
+
+Modules ODL rejects today are baselined with their reasons in [`known_failures.yaml`](mocks/odl_yang_gate/known_failures.yaml), which is also where the job points you when it goes red.
+
+A real SDNR mount is still the ultimate oracle for what static parsing cannot see — deviations, ODLUX rendering. Bring the SMO up as described [below](#launch-all-together) for that.
+
+
 # Launch OCUDU O1 containers standalone
 
 ```bash
