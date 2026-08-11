@@ -402,8 +402,8 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
   <GNBDUFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbdufunction">
     <id>du1</id>
     <attributes>
-      <gNBId>411</gNBId>
-      <gNBIdLength>23</gNBIdLength>
+      <gNBId>1</gNBId>
+      <gNBIdLength>24</gNBIdLength>
       <gNBDUId>3</gNBDUId>
       <gNBDUName>ocududu1</gNBDUName>
       <priorityLabel>1</priorityLabel>
