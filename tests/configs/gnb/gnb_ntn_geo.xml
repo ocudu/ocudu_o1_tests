@@ -701,10 +701,6 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
               <ntn_ul_sync_validity_dur>900</ntn_ul_sync_validity_dur>
               <ta_report>true</ta_report>
               <use_state_vector>true</use_state_vector>
-              <epoch_time>
-                <sfn>0</sfn>
-                <subframe_number>0</subframe_number>
-              </epoch_time>
               <reference_location>
                 <latitude>53.3498</latitude>
                 <longitude>-6.2603</longitude>
