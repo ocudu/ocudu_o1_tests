@@ -2,11 +2,6 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-pytest==8.2.1
-pytest-timeout==2.3.1
-PyYAML==6.0.1
-requests==2.32.3
-ncclient==0.6.15
-# In-process deps of the adapter's ru_config (M-plane client tests).
-xmltodict==0.13.0
-Jinja2>=3.1.2
+__pycache__/
+*.pyc
+log/

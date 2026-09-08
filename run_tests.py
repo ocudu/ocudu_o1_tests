@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 """
@@ -137,10 +138,15 @@ def main() -> int:
         netconf_args += " --enable-tls"
         env["NETCONF_ARGS"] = netconf_args
         env["CURRENT_CONFIG_NAME"] = label
+        test_files = f"test_o1_adapter_{profile}.py"
+        if profile == "du":
+            # The O-RU configuration-management suite (the direct M-plane
+            # client, ru_config) rides the du job; pytest collects the folder.
+            test_files += " configuration-management-tests"
         env["PYTEST_ADDOPTS"] = (
             f"--junitxml=./log/out_{profile}_{label}.xml "
             f"-o junit_suite_name={profile}-{label} "
-            f"test_o1_adapter_{profile}.py"
+            f"{test_files}"
         )
 
         up_proc = subprocess.run(up_cmd, cwd=compose_dir, check=False, env=env)

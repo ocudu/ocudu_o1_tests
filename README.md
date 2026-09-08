@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 -->
 
@@ -34,13 +35,15 @@ This manual path only covers the `gnb` profile against the bundled netconf confi
 
 # Launch automated self-contained integration tests
 
-`run_tests.py` takes a netconf profile and runs the matching `tests/test_o1_adapter_<profile>.py` suite. Valid profiles are `gnb`, `cu`, `cucp`, `cuup`, and `du`.
+`run_tests.py` takes a netconf profile and runs the matching `tests/test_o1_adapter_<profile>.py` suite; the `du` job also runs the O-RU client suites under `tests/configuration-management-tests/` (listed in `run_tests.py`), which drive the adapter's M-plane client (`ru_config.RuConfig`) in-process against the mock RU. Valid profiles are `gnb`, `cu`, `cucp`, `cuup`, and `du`.
 
 ```bash
 $ ./run_tests.py <profile>
 ```
 
 For each profile the suite runs once with the bundled config baked into the netconf image, then once per custom XML under `tests/configs/<profile>/`.
+
+The O-RU client suites take their RU parameter profiles from `tests/configs/ru/*.yaml`: provisioning inputs (MAC addresses, VLAN, eAxC layout, carrier, timing) the tests hand to the client for its full-config runs against the mock RU, plus the DU-side values expected to derive from them. They are not netconf server configs — those are the per-profile XMLs under `tests/configs/<profile>/`.
 
 By default `run_tests.py` reuses existing images. When iterating on the `ocudu_netconf` or `ocudu_o1_adapter` submodules locally, pass `--build` so the images are rebuilt from your checkouts first — otherwise stale images are reused silently (`o1_adapter` is pinned to `:latest`, and uncommitted netconf changes don't bump its SHA tag):
 

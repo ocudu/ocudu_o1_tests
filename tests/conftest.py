@@ -1,9 +1,11 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 import json
 import os
 import ssl
+import sys
 import time
 from pathlib import Path
 from typing import Callable, Optional
@@ -445,3 +447,20 @@ def dryrun_result():
         "status_code": int(lines[0]),
         "logs": "\n".join(lines[1:]),
     }
+
+
+@pytest.fixture(scope="session")
+def o1_adapter_src() -> str:
+    """Put the (read-only mounted) o1_adapter sources on sys.path for in-process imports."""
+    src = os.getenv("O1_ADAPTER_SRC", "/opt/o1_adapter/src")
+    if src not in sys.path:
+        sys.path.insert(0, src)
+    return src
+
+
+@pytest.fixture(scope="session")
+def ru_config(o1_adapter_src, mock_ru_ssh_manager):
+    """The adapter's M-plane NETCONF client (ru_config.RuConfig) bound to the mock RU."""
+    from ru_config import RuConfig
+
+    return RuConfig(mock_ru_ssh_manager, "running")

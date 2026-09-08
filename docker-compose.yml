@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 x-netconf-client-env: &netconf_client_env
@@ -216,6 +217,7 @@ services:
       O1_ADAPTER_HOST: ocudu-o1-adapter
       O1_ADAPTER_PORT: "5000"
       CONFIG_PATH: /tmp/config.yaml
+      O1_ADAPTER_SRC: /opt/o1_adapter/src
       MOCK_GNB_EVENT_LOG: /tmp/mock_gnb_events.jsonl
       MOCK_SMO_EVENT_LOG: /tmp/mock_smo_events.jsonl
       OCUDU_COMMIT: ${OCUDU_COMMIT:-}
@@ -231,6 +233,8 @@ services:
       # same named volume; the test fixture connects via mTLS using these.
       - netconf-tls-certs:/etc/netconf-tls-client:ro
       - mock-ru-tls-certs:/etc/mock-ru-tls-client:ro
+      # The adapter sources, for in-process M-plane client tests (ru_config).
+      - ./ocudu_elements/ocudu_o1_adapter:/opt/o1_adapter:ro
     networks:
       smo:
         ipv4_address: 172.21.0.15
