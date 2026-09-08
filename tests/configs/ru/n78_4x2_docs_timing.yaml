@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# n78 4x2 profile, docs timing — same RU-side values as the reference-timing
+# profile, but with the DU-side timing set published on the OCUDU docs O-RU
+# integration page, which differs from the shipped reference config. The two
+# profiles bracket the discrepancy until timing is derived from the real
+# radio's o-ran-delay-management data.
+
+mplane:
+  ru_mac_addr: "00:a0:0a:01:a4:42"
+  du_mac_addr: "9c:69:b4:66:cd:48"
+  vlan: 5
+  iq_bitwidth: 9
+  compression_type: STATIC
+  num_prb: 273
+  frame_structure: 193
+  rf_bandwidth_hz: 100000000
+  dl_arfcn: 637212
+  dl_freq: 3558180000
+  ul_arfcn: 637212
+  ul_freq: 3558180000
+  tx_gain: 39
+
+expected_du:
+  t1a_max_cp_dl: 470
+  t1a_min_cp_dl: 419
+  t1a_max_cp_ul: 336
+  t1a_min_cp_ul: 285
+  t1a_max_up: 345
+  t1a_min_up: 294
+  ta4_max: 200
+  ta4_min: 0
+  iq_scaling: 20
+  is_prach_cp_enabled: true
+  prach_port_id: [4, 5]
+  dl_port_id: [0, 1, 2, 3]
+  ul_port_id: [0, 1]

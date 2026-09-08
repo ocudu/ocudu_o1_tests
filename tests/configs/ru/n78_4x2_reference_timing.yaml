@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# n78 4x2 profile, reference timing — RU-side values matching OCUDU's shipped
+# 4x2 O-RU reference DU config (band n78, 100 MHz, 30 kHz SCS, 4x2 MIMO),
+# with the DU-side timing set that config ships.
+
+mplane:                    # what ru_config can push to the RU today
+  ru_mac_addr: "00:a0:0a:01:a4:42"
+  du_mac_addr: "9c:69:b4:66:cd:48"
+  vlan: 5
+  iq_bitwidth: 9
+  compression_type: STATIC # ofh_config_builder normalizes to compr_method bfp
+  num_prb: 273             # 100 MHz @ 30 kHz SCS
+  frame_structure: 193
+  rf_bandwidth_hz: 100000000
+  dl_arfcn: 637212
+  dl_freq: 3558180000      # ARFCN 637212 -> 3558.18 MHz
+  ul_arfcn: 637212
+  ul_freq: 3558180000
+  tx_gain: 39              # placeholder until vendor-verified
+
+expected_du:               # DU-side ru_ofh targets (not yet derived by the client;
+                           # to be produced from o-ran-delay-management + module-cap)
+  t1a_max_cp_dl: 535
+  t1a_min_cp_dl: 286
+  t1a_max_cp_ul: 535
+  t1a_min_cp_ul: 286
+  t1a_max_up: 390
+  t1a_min_up: 80
+  ta4_max: 500
+  ta4_min: 25
+  iq_scaling: 5.5
+  is_prach_cp_enabled: true
+  prach_port_id: [4, 5]
+  dl_port_id: [0, 1, 2, 3]
+  ul_port_id: [0, 1]
