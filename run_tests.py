@@ -141,8 +141,21 @@ def main() -> int:
         test_files = f"test_o1_adapter_{profile}.py"
         if profile == "du":
             # The O-RU configuration-management suite (the direct M-plane
-            # client, ru_config) rides the du job; pytest collects the folder.
-            test_files += " configuration-management-tests"
+            # client, ru_config) and the resident session, supervision loop
+            # and rpc log suites ride the du job; pytest collects the folders.
+            test_files += " configuration-management-tests mplane-session-tests"
+            # The mock RU also dials the test container's call-home listener
+            # (RFC 8071) by the container's name on the smo network, and
+            # MOCK_RU_CALLHOME_PORT tells test_mplane_session.py which port to
+            # bind for the accept; without it the call-home check is skipped.
+            env["MOCK_RU_EXTRA_ARGS"] = "--enable-callhome ocudu-o1-tests:4334"
+            env["MOCK_RU_CALLHOME_PORT"] = "4334"
+        else:
+            # The other jobs' mock RU dials nobody and their suites skip the
+            # call-home check: drop the variables in case the operator's shell
+            # carries them, since compose reads them from our environment.
+            env.pop("MOCK_RU_EXTRA_ARGS", None)
+            env.pop("MOCK_RU_CALLHOME_PORT", None)
         env["PYTEST_ADDOPTS"] = (
             f"--junitxml=./log/out_{profile}_{label}.xml "
             f"-o junit_suite_name={profile}-{label} "

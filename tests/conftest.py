@@ -4,7 +4,9 @@
 
 import json
 import os
+import shutil
 import ssl
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -492,3 +494,57 @@ def ru_config(o1_adapter_src, mock_ru_ssh_manager):
     from ru_config import RuConfig
 
     return RuConfig(mock_ru_ssh_manager, "running")
+
+
+MOCK_RU_CONTAINER = os.getenv("MOCK_RU_CONTAINER")
+
+# Tests that make the mock RU emit notifications need docker access to its
+# container: the compose file mounts the daemon socket and names the container,
+# so they run in the du job (and in CI); elsewhere set MOCK_RU_CONTAINER or they skip.
+needs_ru_injection = pytest.mark.skipif(
+    not (MOCK_RU_CONTAINER and shutil.which("docker")),
+    reason="notification injection needs docker access to the mock RU container (set MOCK_RU_CONTAINER)",
+)
+
+
+@pytest.fixture(scope="session")
+def inject_ru_notification():
+    """Return a callable that makes the mock RU emit a NETCONF notification.
+
+    Runs `sysrepocfg --notification` inside the mock RU container; only usable
+    where docker can reach it (see needs_ru_injection).
+    """
+
+    def _inject(payload_xml: str) -> None:
+        subprocess.run(
+            ["docker", "exec", "-i", MOCK_RU_CONTAINER, "sysrepocfg", "--notification", "--format=xml"],
+            input=payload_xml.encode(),
+            check=True,
+            capture_output=True,
+        )
+
+    return _inject
+
+
+@pytest.fixture()
+def fresh_ru_manager():
+    """A dedicated function-scoped NETCONF session to the mock RU.
+
+    create-subscription puts a session into notification mode, so subscription
+    tests must never share the session-scoped managers.
+    """
+    conn = manager.connect(
+        host=os.getenv("MOCK_RU_HOST", "ocudu-mock-ru"),
+        port=int(os.getenv("MOCK_RU_SSH_PORT", "830")),
+        username=os.getenv("NETCONF_USERNAME", "root"),
+        password=os.getenv("NETCONF_PASSWORD", "root"),
+        hostkey_verify=False,
+        allow_agent=False,
+        look_for_keys=False,
+        timeout=10,
+    )
+    yield conn
+    try:
+        conn.close_session()
+    except Exception:  # noqa: BLE001 - the session may already be gone
+        pass

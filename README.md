@@ -35,7 +35,7 @@ This manual path only covers the `gnb` profile against the bundled netconf confi
 
 # Launch automated self-contained integration tests
 
-`run_tests.py` takes a netconf profile and runs the matching `tests/test_o1_adapter_<profile>.py` suite; the `du` job also runs the O-RU client suites under `tests/configuration-management-tests/` (listed in `run_tests.py`), which drive the adapter's M-plane client (`ru_config.RuConfig`) in-process against the mock RU. Valid profiles are `gnb`, `cu`, `cucp`, `cuup`, and `du`.
+`run_tests.py` takes a netconf profile and runs the matching `tests/test_o1_adapter_<profile>.py` suite; the `du` job also runs the O-RU client suites under `tests/configuration-management-tests/` and `tests/mplane-session-tests/` (listed in `run_tests.py`), which drive the adapter's M-plane client (`ru_config.RuConfig`) in-process against the mock RU, together with the resident M-plane session (`mplane_session.MplaneSession`), supervision loop (`ru_controller.supervise`) and NETCONF conversation capture (`rpc_log`) suites. For the `du` job `run_tests.py` also starts the mock RU with `--enable-callhome ocudu-o1-tests:4334`, so it dials the test container, and sets `MOCK_RU_CALLHOME_PORT` so the session suite accepts that call-home connection (RFC 8071) on its own listener and drives both session roles over it; without the variable the call-home check is skipped. The compose file also mounts the docker daemon socket into the test container and names the mock RU container (`MOCK_RU_CONTAINER`), so the suites that make the mock RU emit notifications (`sysrepocfg --notification` via `docker exec`) run in the job as well. Valid profiles are `gnb`, `cu`, `cucp`, `cuup`, and `du`.
 
 ```bash
 $ ./run_tests.py <profile>

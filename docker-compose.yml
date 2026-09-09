@@ -43,7 +43,9 @@ services:
       context: ocudu_elements/ocudu_netconf
       dockerfile: Dockerfile
     entrypoint: ["sh", "-c"]
-    command: ["exec /usr/local/bin/entrypoint.sh --config ru --enable-tls"]
+    # MOCK_RU_EXTRA_ARGS is injected by run_tests.py for the du job, e.g.
+    #   --enable-callhome ocudu-o1-tests:4334  (dial the test container's listener)
+    command: ["exec /usr/local/bin/entrypoint.sh --config ru --enable-tls ${MOCK_RU_EXTRA_ARGS:-}"]
     container_name: ocudu-mock-ru
     environment:
       # username with which netconf client will be authenticated when connecting via tls -> nacm-rules apply
@@ -214,6 +216,12 @@ services:
       MOCK_RU_SSH_PORT: "830"
       MOCK_RU_TLS_PORT: "6513"
       MOCK_RU_TLS_CERT_DIR: /etc/mock-ru-tls-client
+      # Port the mock RU dials for call-home (set with MOCK_RU_EXTRA_ARGS);
+      # the session suite listens on it inside this container.
+      MOCK_RU_CALLHOME_PORT: ${MOCK_RU_CALLHOME_PORT:-}
+      # The mock RU's container, for the suites that make it emit notifications
+      # (`docker exec ... sysrepocfg --notification` over the socket mounted below).
+      MOCK_RU_CONTAINER: ocudu-mock-ru
       O1_ADAPTER_HOST: ocudu-o1-adapter
       O1_ADAPTER_PORT: "5000"
       CONFIG_PATH: /tmp/config.yaml
@@ -235,6 +243,9 @@ services:
       - mock-ru-tls-certs:/etc/mock-ru-tls-client:ro
       # The adapter sources, for in-process M-plane client tests (ru_config).
       - ./ocudu_elements/ocudu_o1_adapter:/opt/o1_adapter:ro
+      # The daemon that runs this compose project (in CI the job's own dind), so the
+      # notification-injection tests can exec into the mock RU container.
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       smo:
         ipv4_address: 172.21.0.15
