@@ -194,6 +194,34 @@ def mock_ru_tls_manager():
 
 
 @pytest.fixture(scope="session")
+def hybrid_odu_tls_manager():
+    """Connect to the mock RU's TLS endpoint as the hybrid-odu identity.
+
+    Same CA and cert dir as mock_ru_tls_manager, but the second client cert the
+    mock's TLS bootstrap issues (CN=hybrid-odu): the username the ru profile's
+    NACM places in the hybrid-odu group (O-RAN WG4 M-plane Table 6.5-1).
+    """
+    cert_dir = Path(os.getenv("MOCK_RU_TLS_CERT_DIR", "/etc/mock-ru-tls-client"))
+    host = os.getenv("MOCK_RU_HOST", "ocudu-mock-ru")
+    port = int(os.getenv("MOCK_RU_TLS_PORT", "6513"))
+
+    def _connect():
+        return manager.connect_tls(
+            host=host,
+            port=port,
+            keyfile=str(cert_dir / "client-hybrid-odu.key"),
+            certfile=str(cert_dir / "client-hybrid-odu.crt"),
+            ca_certs=str(cert_dir / "ca.crt"),
+            protocol=ssl.PROTOCOL_TLS_CLIENT,
+            check_hostname=False,
+        )
+
+    conn = _wait_for(_connect, timeout=120)
+    yield conn
+    conn.close_session()
+
+
+@pytest.fixture(scope="session")
 def ws_event_log_path() -> Path:
     """Return the path used by the mock gNB to persist WebSocket events."""
     return Path(os.getenv("MOCK_GNB_EVENT_LOG", "/tmp/mock_gnb_events.jsonl"))
