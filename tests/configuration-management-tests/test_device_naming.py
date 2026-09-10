@@ -16,7 +16,7 @@ individually declinable via the provision config.
 
 import logging
 
-from pytest import mark
+from pytest import mark, raises
 
 logger = logging.getLogger(__name__)
 

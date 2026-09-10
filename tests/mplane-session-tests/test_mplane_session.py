@@ -977,6 +977,146 @@ def test_non_positive_budget_rejected(o1_adapter_src):
         )
 
 
+@mark.timeout(60)
+def test_session_acts_as_the_configured_role(o1_adapter_src, monkeypatch):
+    """The session's RuConfig carries --ru_role; an absent flag means sudo."""
+    import mplane_session
+    from ru_config import ROLE_HYBRID_ODU, ROLE_SUDO, RuConfig
+
+    seen = []
+
+    class _RecordingRuConfig(RuConfig):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            seen.append(self.role)
+
+    monkeypatch.setattr(mplane_session, "RuConfig", _RecordingRuConfig)
+    alarms = _RecorderAlarms()
+    command = _FakeSession()
+    notification = _FakeSession(notifications=[SUPERVISION_PAYLOAD.format(session_id=1)])
+    session, _ = _make_session(
+        o1_adapter_src, alarms, _pair_factory([command, notification]), ru_role=ROLE_HYBRID_ODU
+    )
+    assert session.role == ROLE_HYBRID_ODU
+
+    asyncio.run(_drive(session, lambda s: s.stats["watchdog_resets"] >= 1))
+
+    assert seen == [ROLE_HYBRID_ODU], "the cycle's RuConfig must act as the configured role"
+    default_session, _ = _make_session(o1_adapter_src, alarms, _pair_factory([]))
+    assert default_session.role == ROLE_SUDO, "no --ru_role means sudo"
+    absent_session, _ = _make_session(o1_adapter_src, alarms, _pair_factory([]), ru_role=None)
+    assert absent_session.role == ROLE_SUDO, "argparse's None default means sudo too"
+
+
+@mark.timeout(60)
+def test_invalid_role_rejected_at_construction(o1_adapter_src):
+    """A role outside Table 6.5-1's account groups is a configuration error,
+    raised before any connect cycle can build a RuConfig with it."""
+    from pytest import raises
+
+    with raises(ValueError, match="ru_role"):
+        _make_session(o1_adapter_src, _RecorderAlarms(), _pair_factory([]), ru_role="operator")
+
+
+@mark.timeout(60)
+def test_long_cycle_handler_does_not_starve_on_a_stale_promise(o1_adapter_src):
+    """A cycle handler that outlasts the O-RU's next-update-at promise fed the
+    watchdog itself (or the O-RU would have dropped the session); the session
+    re-derives its budget from a reset of its own after the handlers instead of
+    declaring starvation on a deadline that expired while the handler ran."""
+    from datetime import datetime, timedelta, timezone
+
+    alarms = _RecorderAlarms()
+    promised = (datetime.now(timezone.utc) + timedelta(seconds=2.5)).isoformat()
+    reply = (
+        '<rpc-reply xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">'
+        f'<next-update-at xmlns="urn:o-ran:supervision:1.0">{promised}</next-update-at></rpc-reply>'
+    )
+    command = _FakeSession()
+    # the first poll after the handler times out (nothing queued), the second
+    # carries the notification — with the promise deadline (+2.5 s promise plus
+    # the 1 s guard = +3.5 s) already expired, the old loop degraded in between
+    notification = _FakeSession(notifications=[None, SUPERVISION_PAYLOAD.format(session_id=1)], dispatch_xml=reply)
+    session, _ = _make_session(
+        o1_adapter_src,
+        alarms,
+        _pair_factory([command, notification]),
+        ru_supervision_interval=1.0,
+        ru_supervision_guard=1.0,
+    )
+    session.register_cycle_handler(lambda ru_config: time.sleep(4.0))  # outlasts the promise plus the guard
+
+    asyncio.run(_drive(session, lambda s: s.stats["supervision_notifications"] >= 1, timeout=20))
+
+    assert session.stats["starvations"] == 0, "a handler that outlasted the promise must not read as starvation"
+    assert session.stats["watchdog_resets"] == 3, "initial reset, the post-handler reset, the notification's"
+    assert not [e for e in alarms.events if e[1] == 1004], "no supervision alarm from a stale deadline"
+
+
+class _PromisingSession(_FakeSession):
+    """Fake O-RU with its own notification cadence: every reset it sees promises
+    next-update-at = now + cadence and moves its next supervision-notification
+    to that instant. take_notification honours the timeout and yields the
+    notification only once it is due."""
+
+    def __init__(self, cadence):
+        super().__init__()
+        self.cadence = cadence
+        self.notify_at = None
+
+    def dispatch(self, element):
+        from datetime import datetime, timedelta, timezone
+
+        self.dispatched.append(element)
+        self.notify_at = time.monotonic() + self.cadence
+        promised = (datetime.now(timezone.utc) + timedelta(seconds=self.cadence)).isoformat()
+        return SimpleNamespace(
+            xml='<rpc-reply xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">'
+            f'<next-update-at xmlns="urn:o-ran:supervision:1.0">{promised}</next-update-at></rpc-reply>'
+        )
+
+    def take_notification(self, block=True, timeout=None):  # noqa: ARG002 - ncclient signature
+        time.sleep(min(timeout or 0.05, 0.05))
+        if self.notify_at is None or time.monotonic() < self.notify_at:
+            return None
+        self.notify_at = None
+        return SimpleNamespace(notification_xml=NOTIFICATION_WRAPPER.format(payload=SUPERVISION_PAYLOAD.format(session_id=1)))
+
+
+@mark.timeout(60)
+def test_handler_feed_moves_the_budget_with_the_oru(o1_adapter_src):
+    """A cycle handler that feeds the watchdog and returns before the initial
+    promise expires restarts the O-RU's timer from an instant the session
+    never saw; on an O-RU whose cadence exceeds the local interval the initial
+    promise would then expire before the next notification. The post-handler
+    reset keeps the session's budget aligned with the O-RU's."""
+    alarms = _RecorderAlarms()
+    command = _FakeSession()
+    # local budget 2.0 + 0.5; the O-RU notifies 3.0 s after the last reset it
+    # saw (promise 3.0 + guard 0.5 = 3.5, honoured within the 2x cap)
+    notification = _PromisingSession(cadence=3.0)
+    session, _ = _make_session(
+        o1_adapter_src,
+        alarms,
+        _pair_factory([command, notification]),
+        ru_supervision_interval=2.0,
+        ru_supervision_guard=0.5,
+    )
+
+    def feeding_handler(ru_config):
+        time.sleep(1.0)
+        ru_config.reset_supervision_watchdog(2.0, 0.5)  # the O-RU's next notification moves to ~4.0 s
+        time.sleep(0.2)
+
+    session.register_cycle_handler(feeding_handler)
+
+    asyncio.run(_drive(session, lambda s: s.stats["supervision_notifications"] >= 1, timeout=20))
+
+    assert session.stats["starvations"] == 0, "the budget must follow the O-RU's timer, not the initial promise"
+    assert not [e for e in alarms.events if e[1] == 1004]
+    assert session.stats["watchdog_resets"] == 3, "initial reset, the post-handler reset, the notification's"
+
+
 _INTERLEAVE = "urn:ietf:params:netconf:capability:interleave:1.0"
 
 
