@@ -141,9 +141,10 @@ def main() -> int:
         test_files = f"test_o1_adapter_{profile}.py"
         if profile == "du":
             # The O-RU configuration-management suite (the direct M-plane
-            # client, ru_config) and the resident session, supervision loop
-            # and rpc log suites ride the du job; pytest collects the folders.
-            test_files += " configuration-management-tests mplane-session-tests"
+            # client, ru_config), the resident session, supervision loop
+            # and rpc log suites, and the provision-on-connect suite ride
+            # the du job; pytest collects the folders.
+            test_files += " configuration-management-tests mplane-session-tests provisioning-tests"
             # The mock RU also dials the test container's call-home listener
             # (RFC 8071) by the container's name on the smo network, and
             # MOCK_RU_CALLHOME_PORT tells test_mplane_session.py which port to
