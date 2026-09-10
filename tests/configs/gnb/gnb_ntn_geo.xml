@@ -639,15 +639,19 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
               <n311>1</n311>
               <t319>1000</t319>
               <etws>
-                <message_id>4356</message_id>
-                <serial_num>1288</serial_num>
-                <warning_type>2432</warning_type>
-                <data_coding_scheme>0</data_coding_scheme>
+                <test>
+                  <message_id>4356</message_id>
+                  <serial_num>1288</serial_num>
+                  <warning_type>2432</warning_type>
+                  <data_coding_scheme>0</data_coding_scheme>
+                </test>
               </etws>
               <cmas>
-                <message_id>4370</message_id>
-                <serial_num>12291</serial_num>
-                <data_coding_scheme>0</data_coding_scheme>
+                <test>
+                  <message_id>4370</message_id>
+                  <serial_num>12291</serial_num>
+                  <data_coding_scheme>0</data_coding_scheme>
+                </test>
               </cmas>
             </ocudu_nrcelldu_sib_extensions>
             <ocudu_nrcelldu_paging_extensions>
