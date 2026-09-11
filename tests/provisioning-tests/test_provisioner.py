@@ -412,6 +412,47 @@ def test_load_provision_config_validates(tmp_path, o1_adapter_src):
 
 
 @mark.timeout(60)
+def test_load_provision_config_checks_the_pm_section(tmp_path, o1_adapter_src):
+    """The optional pm section is validated at startup, not rediscovered as an
+    rpc-error on every connect cycle: known keys, a non-empty list of
+    measurement-object names, positive integer intervals, and a notification
+    interval no longer than the measurement interval."""
+    from ru_provisioner import load_provision_config
+
+    _ = o1_adapter_src
+    base = {key: value for key, value in SYNTHETIC_LAYOUT.items() if key != "activation"}
+
+    def load(pm):
+        path = tmp_path / "pm.yaml"
+        path.write_text(yaml.safe_dump({**base, "pm": pm}), encoding="utf-8")
+        return load_provision_config(str(path), yaml.safe_load)
+
+    good = {"rx_window_objects": ["RX_ON_TIME", "RX_LATE"], "rx_window_interval": 60, "notification_interval": 60}
+    assert load(good)["pm"] == good
+    assert load({})["pm"] == {}
+
+    for bad, message in (
+        ({"rx_window_objects": "RX_ON_TIME"}, "non-empty list"),
+        ({"rx_window_objects": []}, "non-empty list"),
+        ({"rx_window_objects": ["rx on time"]}, "non-empty list"),
+        ({"rx_window_interval": 0}, "positive integer"),
+        ({"notification_interval": "sixty"}, "positive integer"),
+        ({"rx_window_interval": True}, "positive integer"),
+        ({"rx_window_intervall": 60}, "unknown keys"),
+        ("RX_ON_TIME", "must be a mapping"),
+        # a notification interval longer than the measurement interval makes
+        # the O-RU batch earlier intervals into the multiple-* lists, which the
+        # bridge does not parse; the client defaults (60/60) stand in
+        ({"rx_window_interval": 15, "notification_interval": 60}, "must not exceed"),
+        ({"notification_interval": 120}, "must not exceed"),
+        ({"rx_window_interval": 30}, "must not exceed"),
+    ):
+        with raises(ValueError, match=message):
+            load(bad)
+    assert load({"rx_window_interval": 60, "notification_interval": 30})["pm"]["notification_interval"] == 30
+
+
+@mark.timeout(60)
 def test_load_provision_config_normalizes_declarations(tmp_path, o1_adapter_src):
     """Explicit endpoint/switching-point declarations are normalized at load
     (fail-fast), so a malformed declaration is a startup error rather than a
