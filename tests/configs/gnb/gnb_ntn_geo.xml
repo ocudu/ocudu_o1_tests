@@ -573,7 +573,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
               <mcs_table>qam64</mcs_table>
             </ocudu_nrcelldu_pdsch_extensions>
             <ocudu_nrcelldu_pucch_extensions>
-              <sr_period_ms>320</sr_period_ms>
+              <sr_period_ms>80</sr_period_ms>
               <min_k1>2</min_k1>
               <p0_nominal>-90</p0_nominal>
               <pucch_resource_common>11</pucch_resource_common>
