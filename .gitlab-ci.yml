@@ -96,10 +96,12 @@ o1 integration tests:
     GIT_SUBMODULE_STRATEGY: recursive
   parallel: *profile_matrix
   rules:
-    # Synchronization nightly run on dev — gates promotion of dev -> main; additionally runs nightly on main
+    # Synchronization on dev (every push, plus the schedule) gates promotion of dev -> main; additionally runs nightly on main
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly|Synchronization/
-    # Upstream-triggered pointer bump: run for signal, but do not block the bump
-    - if: $CI_PIPELINE_SOURCE == "pipeline"
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "dev"
+    # Upstream merge request: run for signal, but do not block it. An upstream
+    # default-branch push only bumps the pointer; the resulting push to dev tests it.
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $O1_TESTS_UPDATE_SUBMODULE != "true"
       allow_failure: true
     - if: $ON_MR
       allow_failure: true
@@ -125,7 +127,7 @@ o1 integration tests:
 
 # Rationale in mocks/odl_yang_gate/odl_yang_gate.py. Needs only the netconf
 # container, so unlike `o1 integration tests` it is cheap enough to block a merge
-# request, and it deliberately does NOT allow_failure on an upstream pointer bump:
+# request, and it deliberately does NOT allow_failure on an upstream merge request:
 # a mount-breaking YANG change is exactly what must not land.
 odl yang compatibility:
   extends: .docker compose
@@ -135,10 +137,11 @@ odl yang compatibility:
   parallel: *profile_matrix
   rules:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly|Synchronization/
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "dev"
     # Only ocudu_netconf can change the outcome: the advertised module set comes
-    # from the netconf image alone, so an adapter bump would re-run an identical
-    # input for zero signal.
-    - if: $CI_PIPELINE_SOURCE == "pipeline" && $O1_TESTS_UPSTREAM_COMPONENT == "ocudu_netconf"
+    # from the netconf image alone, so an adapter merge request would re-run an
+    # identical input for zero signal.
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $O1_TESTS_UPSTREAM_COMPONENT == "ocudu_netconf" && $O1_TESTS_UPDATE_SUBMODULE != "true"
     - if: $ON_MR
       changes:
         <<: *yang_gate_changes
@@ -168,7 +171,11 @@ update submodule pointer:
       git -C "$SUBMODULE_PATH" checkout "$O1_TESTS_UPSTREAM_SHA"
       git add "$SUBMODULE_PATH"
       git commit -s -m "git: update ${O1_TESTS_UPSTREAM_COMPONENT} submodule pointer"
-      git push origin HEAD:dev
+      for attempt in 1 2 3 4 5; do
+        git push origin HEAD:dev && exit 0
+        git pull --rebase origin dev
+      done
+      exit 1
 
 ################################################################################
 # post
@@ -177,6 +184,7 @@ promotion:
   stage: .post
   rules:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Synchronization/ && $O1_INTEGRATION_TOKEN
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "dev" && $O1_INTEGRATION_TOKEN
   image:
     name: alpine/git:latest
     entrypoint: ["/bin/sh", "-c"]
