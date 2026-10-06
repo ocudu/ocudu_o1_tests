@@ -72,7 +72,6 @@ class _RecordingRuConfig:
         self.sync_states = list(sync_states)
         self.carrier_states = {"Tx-Array-Carrier-00": "READY"} if carrier_states is None else carrier_states
         self.calls = []
-        self.watchdog_resets = 0
         self.role = role
         # scripted ietf-interfaces reads (hybrid-odu): entry lists, None for
         # "no data" or an exception; the last entry repeats
@@ -102,16 +101,11 @@ class _RecordingRuConfig:
             raise state
         return {"sync_state": state}
 
-    def reset_supervision_watchdog(self, interval, guard):  # noqa: ARG002
-        self.watchdog_resets += 1
-
     def activate_full_config(self, config_dict):
         self.calls.append(("activate_full_config", config_dict is SYNTHETIC_LAYOUT))
 
-    def wait_for_carriers_ready(self, timeout_s=120, poll_interval_s=5, on_poll=None, strict=False):  # noqa: ARG002
+    def wait_for_carriers_ready(self, timeout_s=120, poll_interval_s=5, strict=False):  # noqa: ARG002
         assert strict is True, "the provisioner must read carrier state strictly"
-        if on_poll is not None:
-            on_poll()  # the receipt wait must keep offering watchdog feeds
         self.calls.append(("wait_for_carriers_ready",))
         return dict(self.carrier_states)
 
@@ -169,51 +163,6 @@ def test_provision_inactive_state_skips_receipt_wait(o1_adapter_src):
 
 
 @mark.timeout(60)
-def test_feed_schedule_spans_the_activation_boundary(o1_adapter_src):
-    """One feed schedule covers the whole cycle: a due feed fires before the
-    activation edit even when the sync wait returned on its first read, so the
-    boundary between the two waits is never an unfed gap."""
-    from ru_provisioner import RuProvisioner
-
-    _ = o1_adapter_src
-    ru_config = _RecordingRuConfig(sync_states=["LOCKED"])
-    provisioner = RuProvisioner(
-        SYNTHETIC_LAYOUT, sync_timeout_s=7, sync_poll_s=0.01, supervision_interval=0.1, supervision_guard=0.02
-    )
-    original_set_full_config = ru_config.set_full_config
-
-    def slow_set_full_config(config_dict, skip_activation=False):
-        time.sleep(0.12)  # longer than the 0.05 s feed period: a feed is due right after
-        original_set_full_config(config_dict, skip_activation=skip_activation)
-
-    ru_config.set_full_config = slow_set_full_config
-    provisioner.provision(ru_config)
-
-    assert ru_config.watchdog_resets >= 1, "a due feed must fire before activation, not only inside the waits"
-
-
-@mark.timeout(60)
-def test_rejected_feed_is_a_warning_once_per_cycle(o1_adapter_src, caplog):
-    """A rejected watchdog reset during the waits means the O-RU's watchdog
-    is not being fed at all: the first one is a warning, the rest stay quiet."""
-    from ru_provisioner import RuProvisioner
-
-    _ = o1_adapter_src
-    ru_config = _RecordingRuConfig(sync_states=[])
-    ru_config.reset_supervision_watchdog = _raise(_StubRpcError("no matching subscribers"))
-    provisioner = RuProvisioner(
-        SYNTHETIC_LAYOUT, sync_timeout_s=0.3, sync_poll_s=0.01, supervision_interval=0.02, supervision_guard=0.01
-    )
-    with caplog.at_level(logging.DEBUG):
-        provisioner.provision(ru_config)
-
-    warnings = [r for r in caplog.records if r.levelno == logging.WARNING and "rejected during provisioning" in r.message]
-    debugs = [r for r in caplog.records if r.levelno == logging.DEBUG and "rejected during provisioning" in r.message]
-    assert len(warnings) == 1, "exactly one warning per cycle"
-    assert debugs, "later rejections are debug noise"
-
-
-@mark.timeout(60)
 def test_provision_leaves_carriers_inactive_without_sync(o1_adapter_src):
     """No LOCKED within the timeout: provisioned, never activated."""
     from ru_provisioner import RuProvisioner
@@ -223,27 +172,6 @@ def test_provision_leaves_carriers_inactive_without_sync(o1_adapter_src):
     RuProvisioner(SYNTHETIC_LAYOUT, sync_timeout_s=0.05, sync_poll_s=0.01).provision(ru_config)
 
     assert [name for name, *_ in ru_config.calls] == ["set_full_config"]
-
-
-@mark.timeout(60)
-def test_sync_wait_feeds_the_supervision_watchdog(o1_adapter_src):
-    """A long sync wait must keep resetting the watchdog (the O-RU-side
-    supervision budget is much shorter than a cold-boot PTP lock), at half
-    the notification interval."""
-    from ru_provisioner import RuProvisioner
-
-    _ = o1_adapter_src
-    ru_config = _RecordingRuConfig(sync_states=[])
-    provisioner = RuProvisioner(
-        SYNTHETIC_LAYOUT,
-        sync_timeout_s=0.5,
-        sync_poll_s=0.02,
-        supervision_interval=0.1,
-        supervision_guard=0.02,
-    )
-    provisioner.provision(ru_config)
-
-    assert ru_config.watchdog_resets >= 3, "the wait must feed the watchdog throughout"
 
 
 @mark.timeout(60)
@@ -344,20 +272,20 @@ def test_hybrid_several_interfaces_on_the_vlan_prefer_the_conventional_name(o1_a
 
 
 @mark.timeout(60)
-def test_hybrid_waits_for_the_interface_feeding_the_watchdog(o1_adapter_src):
+def test_hybrid_waits_for_the_interface(o1_adapter_src):
     """The interface appears while the cycle waits: the provisioner polls until it
-    does, feeds the supervision watchdog meanwhile, then pushes."""
+    does, then pushes (the session, not the provisioner, feeds the watchdog
+    meanwhile)."""
     from ru_provisioner import RuProvisioner
 
     ru = _RecordingRuConfig(
         sync_states=["LOCKED"], role="hybrid-odu", interfaces=[None] * 12 + [[{"name": "uc-vlan31", "vlan-id": "31"}]]
     )
     provisioner = RuProvisioner(
-        SYNTHETIC_LAYOUT, sync_timeout_s=1, sync_poll_s=0.01, supervision_interval=0.1, interface_timeout_s=5
+        SYNTHETIC_LAYOUT, sync_timeout_s=1, sync_poll_s=0.01, interface_timeout_s=5
     )
     provisioner.provision(ru)
     assert ru.interface_reads == 13
-    assert ru.watchdog_resets >= 1, "the wait must keep feeding the watchdog"
     assert ru.pushed["processing"]["interface_name"] == "uc-vlan31"
 
 
@@ -582,7 +510,7 @@ def test_provision_on_connect_against_sim(o1_adapter_src, ru_config, mock_ru_ssh
     ru_config.set_oran_uplane_carrier_active({"state": "INACTIVE", "nof_tx_carriers": 2, "nof_rx_carriers": 2})
 
     provisioner = RuProvisioner(
-        SYNTHETIC_LAYOUT, sync_timeout_s=1, sync_poll_s=0.5, supervision_interval=60, supervision_guard=10
+        SYNTHETIC_LAYOUT, sync_timeout_s=1, sync_poll_s=0.5
     )
     provision_done = []
     session = MplaneSession(AppState(), _sim_args(), _NullAlarms(), retry_interval=0.5)
@@ -717,8 +645,6 @@ def test_hybrid_provisioning_waits_for_the_management_planes_interface_against_s
         HYBRID_LAYOUT,
         sync_timeout_s=1,
         sync_poll_s=0.5,
-        supervision_interval=60,
-        supervision_guard=10,
         interface_timeout_s=60,
     )
     provision_done = []

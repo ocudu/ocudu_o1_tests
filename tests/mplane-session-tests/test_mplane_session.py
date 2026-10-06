@@ -1020,10 +1020,10 @@ def test_invalid_role_rejected_at_construction(o1_adapter_src):
 
 @mark.timeout(60)
 def test_long_cycle_handler_does_not_starve_on_a_stale_promise(o1_adapter_src):
-    """A cycle handler that outlasts the O-RU's next-update-at promise fed the
-    watchdog itself (or the O-RU would have dropped the session); the session
-    re-derives its budget from a reset of its own after the handlers instead of
-    declaring starvation on a deadline that expired while the handler ran."""
+    """A cycle handler that outlasts the O-RU's next-update-at promise is kept
+    alive by the session's own feeds; the session then re-derives its budget
+    from a reset of its own after the handlers instead of declaring starvation
+    on a deadline that expired while the handler ran."""
     from datetime import datetime, timedelta, timezone
 
     alarms = _RecorderAlarms()
@@ -1049,7 +1049,9 @@ def test_long_cycle_handler_does_not_starve_on_a_stale_promise(o1_adapter_src):
     asyncio.run(_drive(session, lambda s: s.stats["supervision_notifications"] >= 1, timeout=20))
 
     assert session.stats["starvations"] == 0, "a handler that outlasted the promise must not read as starvation"
-    assert session.stats["watchdog_resets"] == 3, "initial reset, the post-handler reset, the notification's"
+    # initial reset, the feeds during the 4-s handler (every 0.5 s), the
+    # post-handler reset and the notification's
+    assert session.stats["watchdog_resets"] >= 3 + 4, "the session feeds the watchdog while the handler runs"
     assert not [e for e in alarms.events if e[1] == 1004], "no supervision alarm from a stale deadline"
 
 
@@ -1114,7 +1116,108 @@ def test_handler_feed_moves_the_budget_with_the_oru(o1_adapter_src):
 
     assert session.stats["starvations"] == 0, "the budget must follow the O-RU's timer, not the initial promise"
     assert not [e for e in alarms.events if e[1] == 1004]
-    assert session.stats["watchdog_resets"] == 3, "initial reset, the post-handler reset, the notification's"
+    # initial reset, the session's own feed during the 1.2-s handler (period
+    # 1.0 s), the post-handler reset and the notification's; the handler's
+    # direct reset is the O-RU's business, not a session stat
+    assert session.stats["watchdog_resets"] >= 3, "the post-handler reset re-derives the budget"
+
+
+@mark.timeout(60)
+def test_session_feeds_the_watchdog_while_cycle_handlers_run(o1_adapter_src):
+    """A cycle handler that blocks for longer than the supervision budget and
+    never touches the watchdog is kept alive by the session: a reset every
+    half interval, all of them on the notification session, counted in the
+    session's stats, and no starvation."""
+    alarms = _RecorderAlarms()
+    command = _FakeSession()
+    notification = _FakeSession(notifications=[None, SUPERVISION_PAYLOAD.format(session_id=1)])
+    session, _ = _make_session(
+        o1_adapter_src,
+        alarms,
+        _pair_factory([command, notification]),
+        ru_supervision_interval=1.0,
+        ru_supervision_guard=0.5,
+    )
+    resets_seen = []
+
+    def blocking_handler(ru_config):  # noqa: ARG001 - cycle handler signature
+        time.sleep(2.2)  # outlasts interval + guard, feeds nothing itself
+        resets_seen.append(len(notification.dispatched))
+
+    session.register_cycle_handler(blocking_handler)
+
+    asyncio.run(_drive(session, lambda s: s.stats["supervision_notifications"] >= 1, timeout=20))
+
+    assert resets_seen, "the handler ran"
+    # the initial reset plus the feeds at 0.5, 1.0, 1.5 and 2.0 s had gone out
+    # on the notification session before the handler returned
+    assert resets_seen[0] >= 1 + 3, f"the session must feed while the handler blocks, saw {resets_seen[0]} resets"
+    assert not command.dispatched, "feeds never ride the command session"
+    assert session.stats["watchdog_resets"] >= resets_seen[0] + 1, "feeds count like every other reset"
+    assert session.stats["starvations"] == 0
+    assert not [e for e in alarms.events if e[1] == 1004]
+
+
+@mark.timeout(60)
+def test_rejected_feeds_keep_the_handler_running(o1_adapter_src):
+    """An O-RU that rejects every watchdog reset (alive but not supervising)
+    does not stop the cycle handlers: the feeds are counted as rpc-errors, the
+    handler completes and the session stays connected."""
+    alarms = _RecorderAlarms()
+    command = _FakeSession()
+    notification = _FakeSession(notifications=[None] * 40, dispatch_error=_StubRpcError("no matching subscribers"))
+    session, _ = _make_session(
+        o1_adapter_src,
+        alarms,
+        _pair_factory([command, notification]),
+        ru_supervision_interval=0.4,
+        ru_supervision_guard=0.2,
+    )
+    done = []
+    session.register_cycle_handler(lambda ru_config: (time.sleep(1.0), done.append(True)))
+
+    asyncio.run(_drive(session, lambda s: bool(done) and s.stats["watchdog_rpc_errors"] >= 4, timeout=20))
+
+    assert done, "the handler must run to completion under rejected feeds"
+    assert session.stats["connect_cycles"] == 1, "a rejected feed is alive-but-rejected, not a recycle"
+
+
+class _AnsweringThenDead(_FakeSession):
+    """Notification session double whose O-RU stops answering after N RPCs."""
+
+    def __init__(self, answers):
+        super().__init__(notifications=[None] * 40)
+        self.answers = answers
+
+    def dispatch(self, element):
+        if len(self.dispatched) >= self.answers:
+            self.dispatched.append(element)
+            raise TimeoutExpiredError("ncclient timed out while waiting for an rpc reply")
+        return super().dispatch(element)
+
+
+@mark.timeout(60)
+def test_unanswered_feed_recycles_after_the_handler(o1_adapter_src):
+    """A feed the O-RU never answers means the transport is gone: the session
+    stops feeding, still waits for the handler thread, and recycles the cycle
+    once it returns instead of entering the notification loop."""
+    alarms = _RecorderAlarms()
+    first = (_FakeSession(), _AnsweringThenDead(answers=1))  # the initial reset is answered, the first feed is not
+    second = (_FakeSession(), _FakeSession(notifications=[SUPERVISION_PAYLOAD.format(session_id=2)]))
+    session, _ = _make_session(
+        o1_adapter_src,
+        alarms,
+        _pair_factory([*first, *second]),
+        ru_supervision_interval=0.4,
+        ru_supervision_guard=0.2,
+    )
+    runs = []
+    session.register_cycle_handler(lambda ru_config: (time.sleep(0.6), runs.append(True)))
+
+    asyncio.run(_drive(session, lambda s: s.stats["connect_cycles"] >= 2 and s.stats["supervision_notifications"] >= 1))
+
+    assert len(runs) == 2, "the handler ran in both cycles (the first one to completion)"
+    assert first[1].closed, "the dead pair was torn down"
 
 
 _INTERLEAVE = "urn:ietf:params:netconf:capability:interleave:1.0"
