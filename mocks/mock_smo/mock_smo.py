@@ -16,6 +16,7 @@ Behaviour:
   - POST /configure {payload_file, clear_log} swaps the payload, re-arms the
     trigger, and optionally truncates the event log so a new test starts clean.
   - The triggered edit is recorded in the event log so tests can assert it ran.
+  - POST /eventListener/v7 (VES collector) appends the event to the same log.
 """
 
 import asyncio
@@ -108,6 +109,16 @@ async def handle_json(request: web.Request) -> web.Response:
     return web.json_response({"ok": True})
 
 
+async def handle_ves(request: web.Request) -> web.Response:
+    """VES collector stand-in: log the event as-is."""
+    try:
+        event = await request.json()
+    except json.JSONDecodeError:
+        return web.json_response({"error": "invalid json"}, status=400)
+    await _append_event(event)
+    return web.Response(status=202)
+
+
 async def handle_configure(request: web.Request) -> web.Response:
     """Re-arm the trigger with a new payload; optionally truncate the event log."""
     state = request.app["state"]
@@ -143,6 +154,7 @@ def main():
     }
     app.router.add_post("/json", handle_json)
     app.router.add_post("/configure", handle_configure)
+    app.router.add_post("/eventListener/v7", handle_ves)
     logging.info(
         "Mock SMO listening on :%d (trigger_after=%d, payload=%s, netconf=%s:%d)",
         PORT,

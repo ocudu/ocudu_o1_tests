@@ -2,10 +2,15 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+import gzip
+import io
 import logging
 from pathlib import Path
 from pytest import mark
+from urllib.parse import urlsplit
+from xml.etree import ElementTree as ET
 
+import paramiko
 import requests
 
 logger = logging.getLogger(__name__)
@@ -355,3 +360,87 @@ def test_smo_closed_loop_changes_preamble_format(run_smo_closed_loop):
         check_applied=lambda c: int(c["cells"][0]["prach"]["prach_config_index"]) == 100,
         pm_filter=["rlc_metrics.tx.num_sdus", "rlc_metrics.rx.num_pdus"],
     )
+
+
+_MEAS_COLLEC_NS = {"m": "http://www.3gpp.org/ftp/specs/archive/32_series/32.435#measCollec"}
+
+
+def _set_pm_reporting(manager, reporting_ctrl: str):
+    """Set a reportingCtrl leaf on cucp1's defaulttrace job; the server drops the other case."""
+    manager.edit_config(
+        target="running",
+        config=f"""
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+            <id>ran1</id>
+            <GNBCUCPFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbcucpfunction">
+              <id>cucp1</id>
+              <PerfMetricJob>
+                <id>defaulttrace</id>
+                <attributes>{reporting_ctrl}</attributes>
+              </PerfMetricJob>
+            </GNBCUCPFunction>
+          </ManagedElement>
+        </config>
+        """,
+    )
+
+
+@mark.timeout(300)
+def test_pm_file_reporting_announces_and_serves_file(
+    netconf_manager,
+    configure_mock_smo,
+    read_smo_events,
+    set_pm_admin_state,
+    set_pm_performance_metrics,
+    wait_for,
+):
+    logger.info("A file-reporting PM job yields a 32.435 file, announced over VES and served over SFTP.")
+    pm_target = ("GNBCUCPFunction", "cucp1")
+    metrics = ["DLRelPSR_Uu", "rlc_metrics.tx.num_sdus"]
+    try:
+        set_pm_admin_state(netconf_manager, *pm_target, "LOCKED")
+        set_pm_performance_metrics(netconf_manager, *pm_target, metrics)
+        configure_mock_smo("", clear_log=True)
+        _set_pm_reporting(netconf_manager, "<fileReportingPeriod>1</fileReportingPeriod>")
+        set_pm_admin_state(netconf_manager, *pm_target, "UNLOCKED")
+
+        def _file_ready():
+            for evt in read_smo_events():
+                ves = evt.get("event")  # a str on the mock's own entries
+                if isinstance(ves, dict) and ves.get("stndDefinedFields", {}).get("data", {}).get(
+                    "notificationType"
+                ) == "notifyFileReady":
+                    return ves
+            return None
+
+        # Files close on minute boundaries; an empty first file is skipped.
+        event = wait_for(_file_ready, timeout=180)
+        assert event["commonEventHeader"]["stndDefinedNamespace"] == "3GPP-PerformanceAssurance"
+        info = event["stndDefinedFields"]["data"]["fileInfoList"][0]
+        assert info["fileCompression"] == "gzip"
+        assert info["fileDataType"] == "Performance"
+
+        url = urlsplit(info["fileLocation"])
+        assert url.scheme == "sftp"
+        transport = paramiko.Transport((url.hostname, url.port or 22))
+        try:
+            transport.connect(username=url.username, password="pm")
+            buffer = io.BytesIO()
+            paramiko.SFTPClient.from_transport(transport).getfo(url.path, buffer)
+        finally:
+            transport.close()
+        content = buffer.getvalue()
+        assert len(content) == info["fileSize"]
+
+        root = ET.fromstring(gzip.decompress(content))
+        meas_infos = root.findall("m:measData/m:measInfo", _MEAS_COLLEC_NS)
+        assert meas_infos, "measCollec file holds no measInfo"
+        for meas_info in meas_infos:
+            assert meas_info.find("m:job", _MEAS_COLLEC_NS).get("jobId") == "defaulttrace"
+            assert meas_info.find("m:granPeriod", _MEAS_COLLEC_NS).get("duration") == "PT1S"
+            names = {t.text for t in meas_info.findall("m:measType", _MEAS_COLLEC_NS)}
+            assert names and names <= set(metrics), names
+    finally:
+        set_pm_admin_state(netconf_manager, *pm_target, "LOCKED")
+        _set_pm_reporting(netconf_manager, "<streamTarget>http://ocudu-mock-smo:9560/json</streamTarget>")

@@ -71,7 +71,11 @@ services:
     # O1_ADAPTER_PROFILE is injected by run_tests.py per profile (gnb|cu|cucp|cuup|du).
     entrypoint: ["sh", "-c"]
     command:
-      - "exec python3 ./src/o1_adapter.py --netconf_host 172.21.0.14 --ws_host ocudu-mock-gnb --ws_port 8001 --profile ${O1_ADAPTER_PROFILE:-gnb}"
+      - >-
+        exec python3 ./src/o1_adapter.py --netconf_host 172.21.0.14 --ws_host ocudu-mock-gnb --ws_port 8001
+        --profile ${O1_ADAPTER_PROFILE:-gnb}
+        --ves_host ocudu-mock-smo --ves_port 9560 --ves_scheme http
+        --pm_dir /pm --pm_sftp_url sftp://pm@ocudu-pm-sftp:22/pm
     healthcheck:
       test: python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/status')"
       interval: 10s
@@ -84,6 +88,8 @@ services:
         condition: service_started
       mock_smo:
         condition: service_started
+      pm_sftp:
+        condition: service_started
     environment:
       WS_HOST: ${O1_ADAPTER_WS_HOST:-ocudu-mock-gnb}
       WS_PORT: ${O1_ADAPTER_WS_PORT:-8001}
@@ -91,6 +97,7 @@ services:
     volumes:
       # Save generated config file to /tmp/config.yml and make it available to the test container
       - shared-data:/tmp
+      - pm-files:/pm
     networks:
       smo:
         ipv4_address: 172.21.0.13
@@ -145,6 +152,18 @@ services:
     profiles: ["test", "dev"]
     volumes:
       - shared-data:/tmp
+
+  # Serves the adapter's PM files to the SMO; the chrooted pm user sees them under /pm.
+  pm_sftp:
+    image: atmoz/sftp:alpine
+    container_name: ocudu-pm-sftp
+    command: ["pm:pm"]
+    volumes:
+      - pm-files:/home/pm/pm:ro
+    networks:
+      smo:
+        ipv4_address: 172.21.0.19
+    profiles: ["test", "dev"]
 
   yaml_validator:
     image: registry.gitlab.com/ocudu/ocudu/ocudu_nightly_avx2:latest
@@ -256,6 +275,7 @@ volumes:
   o1-test-results:
   netconf-tls-certs:
   mock-ru-tls-certs:
+  pm-files:
 
 networks:
   smo:
