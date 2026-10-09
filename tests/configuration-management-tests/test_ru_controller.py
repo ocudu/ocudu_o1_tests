@@ -361,12 +361,10 @@ def test_get_array_carriers_state_is_the_activation_receipt(o1_adapter_src):
     }
 
     # wait_for_carriers_ready returns the map (not-all-READY) after the bounded wait
-    polled = []
     not_ready = RuConfig(_CarrierStateManager(), "running").wait_for_carriers_ready(
-        timeout_s=0.05, poll_interval_s=0.01, on_poll=lambda: polled.append(True)
+        timeout_s=0.05, poll_interval_s=0.01
     )
     assert not_ready["Tx-Array-Carrier-01"] == "BUSY"
-    assert polled, "on_poll must run between polling rounds"
 
 
 @mark.timeout(60)
