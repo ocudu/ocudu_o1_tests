@@ -414,7 +414,6 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
         <clock>internal</clock>
         <sync>internal</sync>
         <amplitude_control>
-          <enable_clipping>false</enable_clipping>
           <tx_gain_backoff>12.0</tx_gain_backoff>
         </amplitude_control>
       </ocudu_ru_sdr_extensions>
