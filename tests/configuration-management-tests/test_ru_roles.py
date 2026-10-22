@@ -168,7 +168,7 @@ def test_hybrid_odu_skips_pm_and_sync_writes(o1_adapter_src, caplog):
     client, sent = _dry_run_client("hybrid-odu")
 
     with caplog.at_level(logging.INFO):
-        assert client.configure_perf_measurement() == []
+        assert client.configure_perf_measurement() == {}
     assert sent == []
     skips = _skip_lines(caplog)
     assert len(skips) == 1
@@ -355,7 +355,7 @@ def test_pm_write_gated_on_hybrid_odu_account(hybrid_odu_client, sudo_client_on_
     caplog.clear()
     with caplog.at_level(logging.INFO):
         assert hybrid_odu_client.set_oran_perf_measurement({"rx_window_interval": interval}) is False
-        assert hybrid_odu_client.configure_perf_measurement({"rx_window_interval": interval}) == []
+        assert hybrid_odu_client.configure_perf_measurement({"rx_window_interval": interval}) == {}
     skips = _skip_lines(caplog)
     assert len(skips) == 2
     assert all(

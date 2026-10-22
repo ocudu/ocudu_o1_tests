@@ -112,6 +112,33 @@ def test_supervise_loop_filters_and_stops_bounded(o1_adapter_src):
     assert interval is not None and interval.text == "2"
 
 
+
+PM_PAYLOAD = (
+    '<measurement-result-stats xmlns="urn:o-ran:performance-management:1.0">'
+    "<rx-window-stats><measurement-object>RX_ON_TIME</measurement-object>"
+    "<name>ru</name><count>42</count></rx-window-stats></measurement-result-stats>"
+)
+
+
+@mark.timeout(60)
+def test_supervise_prints_measurements(o1_adapter_src, capsys):
+    """With print_pm, measurement-result-stats between supervision-notifications
+    print as '<metric> <value>' lines while the watchdog keeps being fed."""
+    from ru_config import RuConfig
+    from ru_controller import supervise
+
+    supervision = SimpleNamespace(
+        notification_xml=NOTIFICATION_WRAPPER.format(payload=SUPERVISION_PAYLOAD.format(session_id=1))
+    )
+    pm = SimpleNamespace(notification_xml=NOTIFICATION_WRAPPER.format(payload=PM_PAYLOAD))
+    noise = SimpleNamespace(notification_xml=NOTIFICATION_WRAPPER.format(payload=NOISE_PAYLOAD))
+    fake = _FakeManager([pm, noise, supervision])
+
+    supervise(RuConfig(fake, "running"), 2, 1, max_notifications=1, print_pm=True)
+
+    assert capsys.readouterr().out == "ru.rx-window-stats.RX_ON_TIME 42\n"
+    assert len(fake.dispatched) == 1
+
 TIMERS_KEPT_REPLY = (
     '<rpc-reply xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">'
     '<error-message xmlns="urn:o-ran:supervision:1.0">O-RU keeps its own timers</error-message>'

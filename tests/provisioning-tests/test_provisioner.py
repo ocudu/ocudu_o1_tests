@@ -838,6 +838,17 @@ def test_load_provision_config_carries_pm_section(tmp_path, o1_adapter_src):
     with raises(ValueError, match="pm must be a mapping"):
         load_provision_config(str(bad_pm), yaml.safe_load)
 
+    # the other groups: [] turns one off, and every measurement interval bounds the notification interval
+    groups = tmp_path / "groups.yaml"
+    groups.write_text(
+        yaml.safe_dump({**base, "pm": {"transceiver_objects": ["RX_POWER"], "epe_objects": []}}), encoding="utf-8"
+    )
+    assert load_provision_config(str(groups), yaml.safe_load)["pm"]["epe_objects"] == []
+    batched = tmp_path / "batched.yaml"
+    batched.write_text(yaml.safe_dump({**base, "pm": {"tx_interval": 30}}), encoding="utf-8")
+    with raises(ValueError, match="must not exceed pm.tx_interval"):
+        load_provision_config(str(batched), yaml.safe_load)
+
 
 @mark.timeout(60)
 def test_load_provision_config_requires_the_leaves_the_templates_render(tmp_path, o1_adapter_src):
