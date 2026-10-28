@@ -5,13 +5,11 @@
 # YANGTOOLS_VERSION must track the YangTools shipped by the SDNC image in
 # smo.env (SDNC_IMAGE), which reports it under
 # /opt/opendaylight/system/org/opendaylight/yangtools/yang-parser-impl/.
-# 3.1.1-STAGING-latest carries 11.0.5. Note that tag floats, so the SMO can move
-# under us with no diff here to review -- the pin cannot drift visibly, and a
-# stale pin silently voids the "faithful oracle" property this gate rests on. A
-# nightly job asserting the two still agree is the only thing that would catch
-# it; pulling the 1.5 GB ONAP image on the MR path would wreck the cheap-gate
-# property instead.
-ARG YANGTOOLS_VERSION=11.0.5
+# 3.2.4 carries 14.0.11. Bump both together: a stale pin silently voids the
+# "faithful oracle" property this gate rests on, and nothing here checks that the
+# two still agree (pulling the 1.5 GB ONAP image on the MR path would wreck the
+# cheap-gate property).
+ARG YANGTOOLS_VERSION=14.0.11
 
 # Coursier's linux launcher is a native binary, so resolving the jars needs no
 # JVM -- a slim base here saves ~180 MB of per-build download over a JDK image.

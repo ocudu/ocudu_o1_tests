@@ -79,7 +79,7 @@ _DUMMY_METRIC_FRAMES: list[str] = [
 ]
 
 
-async def _metric_emitter(websocket: websockets.WebSocketServerProtocol):
+async def _metric_emitter(websocket: websockets.ServerConnection):
     """Stream the dummy frame snapshot on a fixed cadence until the connection closes."""
     while True:
         for frame in _DUMMY_METRIC_FRAMES:
@@ -93,7 +93,7 @@ async def _metric_emitter(websocket: websockets.WebSocketServerProtocol):
             return
 
 
-async def client_handler(websocket: websockets.WebSocketServerProtocol):
+async def client_handler(websocket: websockets.ServerConnection):
     """Handle a single client connection."""
     peer = websocket.remote_address
     logging.info("Client connected: %s", peer)
@@ -145,7 +145,7 @@ async def main():
 
     stop_event = asyncio.Event()
 
-    async def handler_with_shutdown(websocket: websockets.WebSocketServerProtocol):
+    async def handler_with_shutdown(websocket: websockets.ServerConnection):
         await client_handler(websocket)
         if websocket.close_code is not None:
             # If the client requested quit, client_handler closed the socket.

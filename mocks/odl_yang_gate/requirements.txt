@@ -2,5 +2,5 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-ncclient==0.6.15
-PyYAML==6.0.1
+ncclient==0.7.1
+PyYAML==6.0.3

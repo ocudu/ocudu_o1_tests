@@ -38,8 +38,11 @@ services:
       - ODL_ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ODL_CERT_DIR=/opt/opendaylight/current/certs
       - SDNC_CONFIG_DIR=/opt/onap/ccsdk/data/properties
-      - SDNRDBURL=http://sdnrdb:9200
-      - SDNRDBTYPE=ELASTICSEARCH
+      # sdnc-image 3.2.x refuses to start against Elasticsearch.
+      - SDNRDBURL=jdbc:mysql://sdnrdb:3306/sdnrdb
+      - SDNRDBTYPE=MARIADB
+      - SDNRDBUSERNAME=${SDNRDB_USERNAME}
+      - SDNRDBPASSWORD=${SDNRDB_PASSWORD}
       - SDNRDM=false
       - SDNRINIT=true
       - SDNRONLY=true
@@ -60,7 +63,10 @@ services:
     image: ${SDNRDB_IMAGE}
     container_name: sdnrdb
     environment:
-      - discovery.type=single-node
+      - MARIADB_RANDOM_ROOT_PASSWORD=yes
+      - MARIADB_DATABASE=sdnrdb
+      - MARIADB_USER=${SDNRDB_USERNAME}
+      - MARIADB_PASSWORD=${SDNRDB_PASSWORD}
     networks:
       - smo
 

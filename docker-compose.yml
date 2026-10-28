@@ -21,6 +21,11 @@ services:
     entrypoint: ["sh", "-c"]
     command: ["exec /usr/local/bin/entrypoint.sh ${NETCONF_ARGS:---config gnb}"]
     container_name: ocudu-netconf
+    environment:
+      # Password-only SSH user for SDNC 3.2.x (ODL netconf 8 has no keyboard-interactive);
+      # set in smo.env, empty (no user) for test runs.
+      NETCONF_SSH_USERNAME: ${NETCONF_SSH_USERNAME:-}
+      NETCONF_SSH_PASSWORD: ${NETCONF_SSH_PASSWORD:-}
     ports:
       # Comment to hide netconf port from outside of the docker network
       - 830:830
