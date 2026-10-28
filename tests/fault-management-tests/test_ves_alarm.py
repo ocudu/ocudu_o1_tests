@@ -11,7 +11,6 @@ the specificProblem, their event-time as eventTime), the message as
 additionalText. The rendered JSON is captured in place of the HTTP post.
 """
 
-import ast
 import json
 import logging
 from datetime import datetime, timezone
@@ -183,8 +182,8 @@ def test_notification_id_advances_per_event_even_when_delivery_fails(o1_adapter_
     monkeypatch.chdir(Path(o1_adapter_src).parent)
     posted = []
 
-    def failing_post(url, data=None, **kwargs):  # noqa: ARG001 - requests.post signature
-        posted.append(ast.literal_eval(data))
+    def failing_post(url, json=None, **kwargs):  # noqa: ARG001 - requests.post signature
+        posted.append(json)
         raise requests.exceptions.ConnectionError("collector down")
 
     monkeypatch.setattr("ves.requests.post", failing_post)
