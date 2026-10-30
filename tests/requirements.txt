@@ -14,3 +14,7 @@ Jinja2>=3.1.2
 aiohttp==3.14.5
 # Restarts the mock gNB (quit over its remote-control WebSocket) in the energy-saving test.
 websockets==17.3
+# In-process deps of the adapter's entry point (o1_adapter: its HTTP routes and command-line checks);
+# it also imports websockets, pinned above.
+Flask==3.0.3
+deepdiff==8.6.2

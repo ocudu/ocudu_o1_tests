@@ -970,3 +970,112 @@ def test_load_provision_config_activation_state_defaults(tmp_path, o1_adapter_sr
         "state": "ACTIVE",
         "tolerate_reply_timeout": False,
     }
+
+
+# --- the cycle outcome behind the adapter's /ru/status and /ru/ready ---------
+
+
+def _app_state(o1_adapter_src):
+    from state import AppState
+
+    _ = o1_adapter_src
+    return AppState()
+
+
+@mark.timeout(60)
+def test_provision_records_an_active_outcome(o1_adapter_src):
+    """A cycle that activates with every carrier READY records ACTIVE, the
+    sync state it read and the carrier receipt."""
+    from ru_provisioner import PHASE_ACTIVE, RuProvisioner
+
+    app_state = _app_state(o1_adapter_src)
+    assert app_state.ru_provision["phase"] == "NOT_PROVISIONED"
+    ru_config = _RecordingRuConfig(sync_states=["HOLDOVER", "LOCKED"])
+    RuProvisioner(SYNTHETIC_LAYOUT, sync_timeout_s=7, sync_poll_s=0.01, app_state=app_state).provision(ru_config)
+
+    outcome = app_state.ru_provision
+    assert outcome["phase"] == PHASE_ACTIVE
+    assert outcome["sync_state"] == "LOCKED"
+    assert outcome["carriers"] == {"Tx-Array-Carrier-00": "READY"}
+    assert re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", outcome["updated_at"])
+
+
+@mark.timeout(60)
+def test_provision_records_every_inactive_outcome(o1_adapter_src):
+    """Each way a cycle ends with the carriers down is its own phase, and the
+    phase is never ACTIVE."""
+    from ru_provisioner import (
+        PHASE_CARRIERS_NOT_READY,
+        PHASE_INACTIVE,
+        PHASE_INTERFACE_PENDING,
+        PHASE_REJECTED,
+        PHASE_SYNC_NOT_LOCKED,
+        RuProvisioner,
+    )
+
+    cases = [
+        (SYNTHETIC_LAYOUT, _RecordingRuConfig(sync_states=["FREERUN"] * 50), PHASE_SYNC_NOT_LOCKED, "FREERUN"),
+        (
+            SYNTHETIC_LAYOUT,
+            _RecordingRuConfig(sync_states=["LOCKED"], carrier_states={"Rx-Array-Carrier-00": "DISABLED"}),
+            PHASE_CARRIERS_NOT_READY,
+            "LOCKED",
+        ),
+        ({**SYNTHETIC_LAYOUT, "activation": {"state": "INACTIVE"}}, _RecordingRuConfig(sync_states=[]), PHASE_INACTIVE, None),
+        (
+            SYNTHETIC_LAYOUT,
+            _RecordingRuConfig(sync_states=["LOCKED"], role="hybrid-odu", interfaces=[None]),
+            PHASE_INTERFACE_PENDING,
+            None,
+        ),
+    ]
+    for layout, ru_config, phase, sync_state in cases:
+        app_state = _app_state(o1_adapter_src)
+        RuProvisioner(
+            layout, sync_timeout_s=0.05, sync_poll_s=0.01, interface_timeout_s=0.05, app_state=app_state
+        ).provision(ru_config)
+        assert (app_state.ru_provision["phase"], app_state.ru_provision["sync_state"]) == (phase, sync_state)
+
+    app_state = _app_state(o1_adapter_src)
+    ru_config = _RecordingRuConfig(sync_states=["LOCKED"])
+    ru_config.set_full_config = _raise(_StubRpcError())
+    RuProvisioner(SYNTHETIC_LAYOUT, sync_timeout_s=7, sync_poll_s=0.01, app_state=app_state).provision(ru_config)
+    assert app_state.ru_provision["phase"] == PHASE_REJECTED
+
+
+@mark.timeout(60)
+def test_transport_failure_leaves_the_cycle_provisioning(o1_adapter_src):
+    """A dead session recycles; until the next cycle provisions, the outcome
+    stays PROVISIONING, never a stale ACTIVE."""
+    from ncclient.transport import errors as transport_errors
+
+    from ru_provisioner import PHASE_ACTIVE, PHASE_PROVISIONING, RuProvisioner
+
+    app_state = _app_state(o1_adapter_src)
+    provisioner = RuProvisioner(SYNTHETIC_LAYOUT, sync_timeout_s=7, sync_poll_s=0.01, app_state=app_state)
+    provisioner.provision(_RecordingRuConfig(sync_states=["LOCKED"]))
+    assert app_state.ru_provision["phase"] == PHASE_ACTIVE
+
+    with raises(transport_errors.TransportError):
+        provisioner.provision(_RecordingRuConfig(sync_states=[transport_errors.TransportError("session gone")]))
+    assert app_state.ru_provision["phase"] == PHASE_PROVISIONING
+    assert app_state.ru_provision["carriers"] == {}
+
+
+@mark.timeout(60)
+def test_ru_status_ready_only_when_supervised_and_active(o1_adapter_src):
+    """Ready = a SUPERVISED session and, when the adapter provisions, an
+    ACTIVE cycle; without provisioning a supervised session is ready."""
+    from ru_provisioner import PHASE_ACTIVE, PHASE_SYNC_NOT_LOCKED, ru_status
+
+    _ = o1_adapter_src
+    active = {"phase": PHASE_ACTIVE, "sync_state": "LOCKED", "carriers": {"c": "READY"}, "updated_at": "t"}
+    not_locked = {**active, "phase": PHASE_SYNC_NOT_LOCKED}
+    supervised = {"ru_mplane_state": "SUPERVISED"}
+
+    assert ru_status(supervised, active, True) == {"session": "SUPERVISED", "provisioning": active, "ready": True}
+    assert ru_status(supervised, not_locked, True)["ready"] is False
+    for session in ("DISCONNECTED", "CONNECTING", "DEGRADED"):
+        assert ru_status({"ru_mplane_state": session}, active, True)["ready"] is False
+    assert ru_status(supervised, not_locked, False) == {"session": "SUPERVISED", "provisioning": None, "ready": True}
+    assert ru_status({}, active, False)["session"] == "DISCONNECTED"
