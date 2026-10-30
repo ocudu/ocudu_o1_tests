@@ -113,3 +113,20 @@ def test_password_file_usage_errors(o1_adapter_src, tmp_path):
         )
         assert result.returncode == 2, (argv, result.returncode, result.stderr[-400:])
         assert needle in result.stderr, (argv, result.stderr[-400:])
+
+
+@mark.timeout(60)
+def test_http_port_outside_the_tcp_range_is_refused(o1_adapter_src):
+    """--http_port moves the HTTP endpoints off 5000 (two adapters on one host
+    network); a value outside 1..65535 is a usage error at startup."""
+    for port in ("0", "65536"):
+        result = subprocess.run(
+            [sys.executable, "o1_adapter.py", "--profile", "ru", "--http_port", port],
+            cwd=o1_adapter_src,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=60,
+        )
+        assert result.returncode == 2, (port, result.returncode, result.stderr[-400:])
+        assert "--http_port must be 1..65535" in result.stderr
