@@ -432,9 +432,9 @@ def test_load_provision_config_checks_the_pm_section(tmp_path, o1_adapter_src):
     assert load({})["pm"] == {}
 
     for bad, message in (
-        ({"rx_window_objects": "RX_ON_TIME"}, "non-empty list"),
-        ({"rx_window_objects": []}, "non-empty list"),
-        ({"rx_window_objects": ["rx on time"]}, "non-empty list"),
+        ({"rx_window_objects": "RX_ON_TIME"}, "list of object names"),
+        ({"rx_window_objects": []}, "list of object names"),
+        ({"rx_window_objects": ["rx on time"]}, "list of object names"),
         ({"rx_window_interval": 0}, "positive integer"),
         ({"notification_interval": "sixty"}, "positive integer"),
         ({"rx_window_interval": True}, "positive integer"),
