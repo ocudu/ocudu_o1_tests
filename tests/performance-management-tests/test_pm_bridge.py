@@ -414,7 +414,7 @@ def test_configure_remembers_the_converged_object_set(o1_adapter_src, caplog):
 
     def configure_perf_measurement(config=None):
         requests_seen.append(None if config is None else list(config.get("rx_window_objects", [])))
-        return ["RX_ON_TIME", "RX_LATE"] if len(requests_seen) < 3 else []
+        return {"rx_window_objects": ["RX_ON_TIME", "RX_LATE"]} if len(requests_seen) < 3 else {}
 
     ru_config = SimpleNamespace(
         get_perf_measurement_config=lambda operational=False: {},
@@ -423,14 +423,20 @@ def test_configure_remembers_the_converged_object_set(o1_adapter_src, caplog):
     )
     with caplog.at_level(logging.INFO):
         bridge.configure(ru_config)
+    converged = {
+        "rx_window_objects": ["RX_ON_TIME", "RX_LATE"],
+        "transceiver_objects": [],
+        "tx_objects": [],
+        "epe_objects": [],
+    }
     assert requests_seen == [None], "first cycle: the default set"
-    assert bridge.pm_config == {"rx_window_objects": ["RX_ON_TIME", "RX_LATE"]}
+    assert bridge.pm_config == converged
     assert any("converged on" in r.getMessage() for r in caplog.records)
 
     bridge.configure(ru_config)
     bridge.configure(ru_config)  # activates nothing this time
     assert requests_seen[1:] == [["RX_ON_TIME", "RX_LATE"], ["RX_ON_TIME", "RX_LATE"]]
-    assert bridge.pm_config == {"rx_window_objects": ["RX_ON_TIME", "RX_LATE"]}, "an empty result changes nothing"
+    assert bridge.pm_config == converged, "an empty result changes nothing"
 
 
 @mark.timeout(60)
@@ -569,7 +575,8 @@ def _capable_ru(data, requests_seen):
 
     def configure_perf_measurement(config=None):
         requests_seen.append(config)
-        return list((config or {}).get("rx_window_objects") or [])
+        groups = ("rx_window_objects", "transceiver_objects", "tx_objects", "epe_objects")
+        return {key: list(config[key]) for key in groups if (config or {}).get(key)}
 
     return SimpleNamespace(
         get_module_capabilities_map=lambda strict=False: {"o-ran-performance-management": {}},
@@ -602,13 +609,21 @@ def test_parse_measurement_capabilities_shapes(o1_adapter_src):
 
 @mark.timeout(60)
 def test_advertised_rx_window_objects_are_requested_up_front(o1_adapter_src, caplog):
-    """With capabilities and no profile set, every advertised rx-window object
-    the template's unit (RU) applies to is requested — no rejected first edit."""
+    """With capabilities and no profile set, every advertised object the
+    template's unit (RU) applies to is requested, per group — no rejected
+    first edit."""
     bridge, _ = _pm_setup(o1_adapter_src)
     seen = []
     with caplog.at_level(logging.INFO):
         bridge.configure(_capable_ru(CAPABILITIES, seen))
-    assert seen == [{"rx_window_objects": ["RX_ON_TIME", "RX_EARLY", "RX_LATE", "RX_CORRUPT"]}]
+    assert seen == [
+        {
+            "rx_window_objects": ["RX_ON_TIME", "RX_EARLY", "RX_LATE", "RX_CORRUPT"],
+            "transceiver_objects": [],
+            "tx_objects": ["TX_TOTAL"],
+            "epe_objects": [],
+        }
+    ]
     assert any(
         "advertises measurement objects: rx-window (5), tx-stats (1), transceiver (1)" in r.getMessage()
         for r in caplog.records
@@ -624,29 +639,39 @@ def test_profile_objects_are_narrowed_to_the_advertised(o1_adapter_src, caplog):
     seen = []
     with caplog.at_level(logging.INFO):
         bridge.configure(_capable_ru(CAPABILITIES, seen))
-    assert seen == [{"rx_window_objects": ["RX_ON_TIME", "RX_LATE"], "notification_interval": 30}]
+    assert seen == [
+        {
+            "rx_window_objects": ["RX_ON_TIME", "RX_LATE"],
+            "notification_interval": 30,
+            "transceiver_objects": [],
+            "tx_objects": ["TX_TOTAL"],
+            "epe_objects": [],
+        }
+    ]
     assert bridge.pm_config["rx_window_objects"] == ["RX_ON_TIME", "RX_DUPL", "RX_LATE"]
     assert any("not advertised by the O-RU" in r.getMessage() and "RX_DUPL" in r.getMessage() for r in caplog.records)
 
 
 @mark.timeout(60)
 def test_nothing_advertised_skips_the_write(o1_adapter_src, caplog):
-    """Capabilities without rx-window objects, or a profile naming only
-    unadvertised ones, skip the edit with a warning."""
-    tx_only = {
+    """Capabilities with no object for the template's unit (RU), or a profile
+    naming only unadvertised ones, skip the edit with a warning."""
+    transport_only = {
         "performance-measurement-objects": {
-            "measurement-capabilitites": {"tx-stats-objects": [{"measurement-object": "TX_TOTAL"}]}
+            "measurement-capabilitites": {
+                "tx-stats-objects": [{"measurement-object": "TX_TOTAL", "object-unit": "TRANSPORT"}]
+            }
         }
     }
     seen = []
     with caplog.at_level(logging.WARNING):
         bridge, _ = _pm_setup(o1_adapter_src)
-        bridge.configure(_capable_ru(tx_only, seen))
+        bridge.configure(_capable_ru(transport_only, seen))
         bridge, _ = _pm_setup(o1_adapter_src)
-        bridge.pm_config = {"rx_window_objects": ["RX_DUPL"]}
+        bridge.pm_config = {"rx_window_objects": ["RX_DUPL"], "tx_objects": []}
         bridge.configure(_capable_ru(CAPABILITIES, seen))
     assert seen == []
-    assert sum("advertises none of the rx-window measurement objects" in r.getMessage() for r in caplog.records) == 2
+    assert sum("advertises none of the requested measurement objects" in r.getMessage() for r in caplog.records) == 2
 
 
 @mark.timeout(60)
