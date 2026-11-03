@@ -101,6 +101,7 @@ def test_initial_configuration_written(config_path: Path, load_config):
     first_cell = config["cells"][0]
     assert "ssb" in first_cell, "ssb section missing in first cell"
     assert "ssb_block_power_dbm" in first_cell["ssb"], "ssb block power missing"
+    assert "warn_on_drop" in config.get("du", {}), "warn_on_drop missing under du"
 
 
 @mark.timeout(240)

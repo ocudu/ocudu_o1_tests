@@ -740,6 +740,7 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
     </EP_F1U>
 
     <ocudu_gnbdufunction_extensions xmlns="urn:ocudu-gnbdufunction-extension:1.0">
+      <warn_on_drop>false</warn_on_drop>
       <ocudu_ru_sdr_extensions>
         <device_driver>uhd</device_driver>
         <device_args>type=b200,num_recv_frames=64,num_send_frames=64</device_args>
