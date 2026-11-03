@@ -408,14 +408,14 @@ def test_session_bridge_wiring_end_to_end(o1_adapter_src):
     """MplaneSession dispatches alarm-notifs into the bridge and runs the
     reconcile cycle handler with a live RuConfig — the orchestrator wiring,
     minus real sockets."""
-    from alarm_defs import AlarmDefinitions
+    from alarm_defs import ALARM_DEFINITIONS
     from alarm_manager import AlarmManager
     from mplane_session import MplaneSession
     from ru_fm_bridge import RuFaultBridge
     from state import AppState
 
     events = []
-    alarm_manager = AlarmManager(AlarmDefinitions.defs, notifier=events.append)
+    alarm_manager = AlarmManager(ALARM_DEFINITIONS, notifier=events.append)
     bridge = RuFaultBridge(alarm_manager)
     reconciled = []
 
@@ -643,14 +643,14 @@ def test_injected_fault_reaches_alarm_manager(o1_adapter_src, inject_ru_notifica
     The sim rejects every watchdog reset, so the session never grants
     SUPERVISED — readiness is observed via watchdog attempts, not phase
     (same idiom as the mplane_session sim tests)."""
-    from alarm_defs import AlarmDefinitions
+    from alarm_defs import ALARM_DEFINITIONS
     from alarm_manager import AlarmManager
     from mplane_session import MplaneSession
     from ru_fm_bridge import RuFaultBridge
     from state import AppState
 
     events = []
-    alarm_manager = AlarmManager(AlarmDefinitions.defs, notifier=events.append)
+    alarm_manager = AlarmManager(ALARM_DEFINITIONS, notifier=events.append)
     bridge = RuFaultBridge(alarm_manager)
     session = MplaneSession(AppState(), _sim_args(), alarm_manager, retry_interval=0.5)
     session.poll_cap = 0.5
@@ -693,13 +693,13 @@ def test_reconnect_reconcile_retires_stale_fault(o1_adapter_src, inject_ru_notif
     is empty), closing the missed-clear window. Readiness is observed via
     watchdog attempts — the sim rejects every reset, so SUPERVISED is never
     granted."""
-    from alarm_defs import AlarmDefinitions
+    from alarm_defs import ALARM_DEFINITIONS
     from alarm_manager import AlarmManager
     from mplane_session import MplaneSession
     from ru_fm_bridge import RuFaultBridge
     from state import AppState
 
-    alarm_manager = AlarmManager(AlarmDefinitions.defs)
+    alarm_manager = AlarmManager(ALARM_DEFINITIONS)
     bridge = RuFaultBridge(alarm_manager)
     session = MplaneSession(AppState(), _sim_args(), alarm_manager, retry_interval=0.5)
     session.poll_cap = 0.5
