@@ -2,8 +2,10 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+import asyncio
 import gzip
 import io
+import json
 import logging
 from pathlib import Path
 from pytest import mark
@@ -12,6 +14,7 @@ from xml.etree import ElementTree as ET
 
 import paramiko
 import requests
+import websockets
 
 logger = logging.getLogger(__name__)
 
@@ -445,3 +448,116 @@ def test_pm_file_reporting_announces_and_serves_file(
     finally:
         set_pm_admin_state(netconf_manager, *pm_target, "LOCKED")
         _set_pm_reporting(netconf_manager, "<streamTarget>http://ocudu-mock-smo:9560/json</streamTarget>")
+
+
+_CES_NS = "urn:3gpp:sa5:_3gpp-nr-nrm-cesmanagementfunction"
+_CES_PARENT = """
+<ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+  <id>ran1</id>
+  <GNBCUCPFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbcucpfunction">
+    <id>cucp1</id>
+    <NRCellCU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellcu">
+      <id>nrcellcu1</id>
+      {}
+    </NRCellCU>
+  </GNBCUCPFunction>
+</ManagedElement>
+"""
+# nrcellcu1: gNBId 1 (24 bits) and cellLocalId 0
+_ES_CGI = {"plmn": "00101", "nci": (1 << 12) | 0}
+_ES_CES_DN = "ManagedElement=ran1/GNBCUCPFunction=cucp1/NRCellCU=nrcellcu1/CESManagementFunction=1"
+_ES_DU_DN = "ManagedElement=ran1/GNBDUFunction=du1/NRCellDU=nrcelldu1"
+
+
+def _set_energy_saving_control(manager, control: str):
+    ces = (
+        f'<CESManagementFunction xmlns="{_CES_NS}"><id>1</id>'
+        f"<attributes><energySavingControl>{control}</energySavingControl></attributes></CESManagementFunction>"
+    )
+    manager.edit_config(
+        target="running",
+        config=f'<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">{_CES_PARENT.format(ces)}</config>',
+    )
+
+
+def _remove_energy_saving_function(manager):
+    ces = (
+        f'<CESManagementFunction xmlns="{_CES_NS}" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" '
+        'nc:operation="remove"><id>1</id></CESManagementFunction>'
+    )
+    manager.edit_config(
+        target="running",
+        config=f'<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">{_CES_PARENT.format(ces)}</config>',
+    )
+
+
+def _energy_saving_state(manager):
+    data = manager.get_config(
+        source="running", filter=("subtree", _CES_PARENT.format(f'<CESManagementFunction xmlns="{_CES_NS}"/>'))
+    ).data_xml
+    node = ET.fromstring(data).find(f".//{{{_CES_NS}}}energySavingState")
+    return None if node is None else node.text
+
+
+def _attribute_value_changes(read_smo_events) -> list:
+    """(MOI path, new attribute values) of every notifyMOIAttributeValueChanges the SMO received, in order."""
+    changes = []
+    for evt in read_smo_events():
+        ves = evt.get("event")  # a str on the mock's own entries
+        if not isinstance(ves, dict):
+            continue
+        data = ves.get("stndDefinedFields", {}).get("data", {})
+        if data.get("notificationType") == "notifyMOIAttributeValueChanges":
+            assert ves["commonEventHeader"]["stndDefinedNamespace"] == "3GPP-Provisioning"
+            changes.append((data["href"].split("/", 3)[3], data["attributeListValueChanges"][0]))
+    return changes
+
+
+async def _restart_mock_gnb():
+    """Make the mock gNB exit; docker restarts it with every cell up again, like a restarted gNB."""
+    async with websockets.connect("ws://ocudu-mock-gnb:8001") as ws:
+        await ws.send(json.dumps({"cmd": "quit"}))
+
+
+@mark.timeout(300)
+def test_energy_saving_switches_cell_off_and_on(
+    netconf_manager,
+    o1_adapter_base_url,
+    configure_mock_smo,
+    read_smo_events,
+    ws_event_log_path,
+    read_ws_events,
+    wait_for,
+):
+    logger.info("energySavingControl switches the cell off/on at runtime and reports the result to the SMO.")
+    ws_event_log_path.unlink(missing_ok=True)
+    configure_mock_smo("", clear_log=True)
+
+    def _commands(cmd):
+        return [e for e in read_ws_events() if e.get("cmd") == cmd]
+
+    try:
+        # Switch-off: cell_lock, then energySavingState in the datastore and both attribute changes over VES.
+        _set_energy_saving_control(netconf_manager, "toBeEnergySaving")
+        wait_for(lambda: _energy_saving_state(netconf_manager) == "isEnergySaving", timeout=60)
+        assert [e["cgi"] for e in _commands("cell_lock")] == [_ES_CGI]
+        assert not _commands("quit"), "energy saving must not restart the gNB"
+        wait_for(lambda: len(_attribute_value_changes(read_smo_events)) >= 2, timeout=30)
+        assert _attribute_value_changes(read_smo_events)[:2] == [
+            (_ES_CES_DN, {"energySavingState": "isEnergySaving"}),
+            (_ES_DU_DN, {"cellState": "IDLE"}),
+        ]
+
+        # A restarted gNB brings the cell back up: the adapter switches it off again on reconnect.
+        asyncio.run(_restart_mock_gnb())
+        wait_for(lambda: len(_commands("cell_lock")) == 2, timeout=90)
+
+        # Switch-on.
+        _set_energy_saving_control(netconf_manager, "toBeNotEnergySaving")
+        wait_for(lambda: _energy_saving_state(netconf_manager) == "isNotEnergySaving", timeout=60)
+        assert [e["cgi"] for e in _commands("cell_unlock")] == [_ES_CGI]
+        wait_for(lambda: (_ES_DU_DN, {"cellState": "ACTIVE"}) in _attribute_value_changes(read_smo_events), timeout=30)
+        assert len(_commands("quit")) == 1, "only the test's own restart may quit the gNB"
+        assert requests.get(f"{o1_adapter_base_url}/config-healthy", timeout=5).status_code == 200
+    finally:
+        _remove_energy_saving_function(netconf_manager)

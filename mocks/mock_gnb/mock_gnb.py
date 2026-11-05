@@ -29,6 +29,8 @@ EVENT_LOG_PATH = (
 )
 EVENT_LOG_LOCK = asyncio.Lock()
 _EMIT_PERIOD_S = float(os.getenv("MOCK_GNB_EMIT_PERIOD_S", "1.0"))
+# NCIs locked via cell_lock. Process state only: like a real gNB, a restart brings every cell back up.
+_LOCKED_CELLS: set[int] = set()
 
 
 async def _record_event(event: Dict[str, Any]):
@@ -59,6 +61,20 @@ def _build_response(request: Dict[str, Any]) -> Dict[str, Any]:
         response["status"] = "ssb-updated"
     elif cmd == "rrm_policy_ratio_set":
         response["status"] = "rrm-policy-updated"
+    elif cmd in ("cell_lock", "cell_unlock", "cell_status"):
+        # Every CGI is a known cell; lock/unlock complete at once (the CU-CP's graceful stop is instant here).
+        nci = request.get("cgi", {}).get("nci")
+        if cmd == "cell_lock":
+            _LOCKED_CELLS.add(nci)
+        elif cmd == "cell_unlock":
+            _LOCKED_CELLS.discard(nci)
+        else:
+            locked = nci in _LOCKED_CELLS
+            response["result"] = {
+                "admin_state": "locked" if locked else "unlocked",
+                "operational_state": "disabled" if locked else "enabled",
+                "cell_barred": False,
+            }
     else:
         response["status"] = "ack"
     return response
