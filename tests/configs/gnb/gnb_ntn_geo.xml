@@ -703,13 +703,24 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             <ocudu_nrcelldu_ntn_extensions>
               <satellite_idx>0</satellite_idx>
               <cell_specific_koffset>150</cell_specific_koffset>
+              <k_mac>2</k_mac>
               <ntn_ul_sync_validity_dur>900</ntn_ul_sync_validity_dur>
               <ta_report>true</ta_report>
+              <ta_report_offset_threshold>2.0</ta_report_offset_threshold>
+              <ta_report_sr_enabled>true</ta_report_sr_enabled>
               <use_state_vector>true</use_state_vector>
               <reference_location>
                 <latitude>53.3498</latitude>
                 <longitude>-6.2603</longitude>
               </reference_location>
+              <ncells>
+                <idx>0</idx>
+                <satellite_idx>0</satellite_idx>
+                <pci>2</pci>
+                <polarization>
+                  <dl>rhcp</dl>
+                </polarization>
+              </ncells>
             </ocudu_nrcelldu_ntn_extensions>
           </ocudu_nrcelldu_extensions>
       </attributes>
