@@ -116,7 +116,7 @@ docker compose -f docker-compose.smo.yml --env-file smo.env -f docker-compose.ym
 ```
 
 When launching both docker yml's you can connect to the SMO web interface as described in the section [above](#launch-minimal-smo-standalone).
-Then, to connect to the netconf server of the gNB, go to "Connect->Add Node" and add a new connection using the local IP, i.e. `172.21.0.14`. Credentials will be `root/root` by default.
+Then, to connect to the netconf server of the gNB, go to "Connect->Add Node" and add a new connection using the local IP, i.e. `172.21.0.14`. Credentials are `NETCONF_SSH_USERNAME`/`NETCONF_SSH_PASSWORD` from `smo.env` (`sdnr/sdnr`).
 
 # Development / CI setup
 The CI setup of this repository can be summarized in the following:

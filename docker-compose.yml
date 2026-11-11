@@ -5,8 +5,8 @@
 x-netconf-client-env: &netconf_client_env
   NETCONF_HOST: ocudu-netconf
   NETCONF_PORT: "830"
-  NETCONF_USERNAME: root
-  NETCONF_PASSWORD: root
+  NETCONF_USERNAME: ${NETCONF_SSH_USERNAME:-o1test}
+  NETCONF_PASSWORD: ${NETCONF_SSH_PASSWORD:-o1test}
 
 services:
 
@@ -22,10 +22,10 @@ services:
     command: ["exec /usr/local/bin/entrypoint.sh ${NETCONF_ARGS:---config gnb}"]
     container_name: ocudu-netconf
     environment:
-      # Password-only SSH user for SDNC 3.2.x (ODL netconf 8 has no keyboard-interactive);
-      # set in smo.env, empty (no user) for test runs.
-      NETCONF_SSH_USERNAME: ${NETCONF_SSH_USERNAME:-}
-      NETCONF_SSH_PASSWORD: ${NETCONF_SSH_PASSWORD:-}
+      # The only password login the image offers (it ships no default logins). SDNC 3.2.x
+      # uses it too (ODL netconf 8 has no keyboard-interactive): smo.env sets sdnr/sdnr.
+      NETCONF_SSH_USERNAME: ${NETCONF_SSH_USERNAME:-o1test}
+      NETCONF_SSH_PASSWORD: ${NETCONF_SSH_PASSWORD:-o1test}
     ports:
       # Comment to hide netconf port from outside of the docker network
       - 830:830
@@ -55,6 +55,8 @@ services:
     environment:
       # username with which netconf client will be authenticated when connecting via tls -> nacm-rules apply
       CLIENT_CN: mplane
+      NETCONF_SSH_USERNAME: ${NETCONF_SSH_USERNAME:-o1test}
+      NETCONF_SSH_PASSWORD: ${NETCONF_SSH_PASSWORD:-o1test}
     ports:
       - 16513:6513
     volumes:
@@ -78,6 +80,7 @@ services:
     command:
       - >-
         exec python3 ./src/o1_adapter.py --netconf_host 172.21.0.14 --ws_host ocudu-mock-gnb --ws_port 8001
+        --netconf_username ${NETCONF_SSH_USERNAME:-o1test} --netconf_password ${NETCONF_SSH_PASSWORD:-o1test}
         --profile ${O1_ADAPTER_PROFILE:-gnb}
         --ves_host ocudu-mock-smo --ves_port 9560 --ves_scheme http
         --pm_dir /pm --pm_sftp_url sftp://pm@ocudu-pm-sftp:22/pm
