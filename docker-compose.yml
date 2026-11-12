@@ -270,6 +270,8 @@ services:
       - mock-ru-tls-certs:/etc/mock-ru-tls-client:ro
       # The adapter sources, for in-process M-plane client tests (ru_config).
       - ./ocudu_elements/ocudu_o1_adapter:/opt/o1_adapter:ro
+      # The netconf YANG, to check the adapter's hand-kept leaf tables against it.
+      - ./ocudu_elements/ocudu_netconf/custom_yangs:/opt/netconf/custom_yangs:ro
       # The daemon that runs this compose project (in CI the job's own dind), so the
       # notification-injection tests can exec into the mock RU container.
       - /var/run/docker.sock:/var/run/docker.sock
