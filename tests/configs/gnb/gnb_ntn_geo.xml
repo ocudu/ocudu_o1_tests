@@ -49,6 +49,29 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
             </ta_info>
           </ocudu_ntn_satellite_extensions>
         </EphemerisInfos>
+        <!-- Second GEO satellite: target of the satellite switch and of an NTN neighbour cell. -->
+        <EphemerisInfos>
+          <idx>1</idx>
+          <satelliteId>00001</satelliteId>
+          <epochTime>2026-01-01T00:00:00Z</epochTime>
+          <positionVelocity>
+            <idx>0</idx>
+            <positionX>19770302.0</positionX>
+            <positionY>1967783.0</positionY>
+            <positionZ>20922195.0</positionZ>
+            <velocityVX>0.0</velocityVX>
+            <velocityVY>0.0</velocityVY>
+            <velocityVZ>0.0</velocityVZ>
+          </positionVelocity>
+          <ocudu_ntn_satellite_extensions xmlns="urn:ocudu-ntnfunction-extension:1.0">
+            <propagator_type>keplerian</propagator_type>
+            <ta_info>
+              <ta_common>0.0</ta_common>
+              <ta_common_drift>0.0</ta_common_drift>
+              <ta_common_drift_variant>0.0</ta_common_drift_variant>
+            </ta_info>
+          </ocudu_ntn_satellite_extensions>
+        </EphemerisInfos>
       </attributes>
     </EphemerisInfoSet>
   </NTNFunction>
@@ -709,10 +732,26 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
               <ta_report_offset_threshold>2.0</ta_report_offset_threshold>
               <ta_report_sr_enabled>true</ta_report_sr_enabled>
               <use_state_vector>true</use_state_vector>
+              <t_service>2026-12-01T00:00:00Z</t_service>
               <reference_location>
                 <latitude>53.3498</latitude>
                 <longitude>-6.2603</longitude>
               </reference_location>
+              <sat_switch_with_resync>
+                <satellite_idx>1</satellite_idx>
+                <t_service_start>2026-11-30T23:59:00Z</t_service_start>
+                <polarization>
+                  <dl>lhcp</dl>
+                </polarization>
+              </sat_switch_with_resync>
+              <!-- Listed out of idx order: the adapter must send idx 0 first. The empty
+                   polarization presence container must render as {}. -->
+              <ncells>
+                <idx>1</idx>
+                <satellite_idx>1</satellite_idx>
+                <pci>3</pci>
+                <polarization/>
+              </ncells>
               <ncells>
                 <idx>0</idx>
                 <satellite_idx>0</satellite_idx>
