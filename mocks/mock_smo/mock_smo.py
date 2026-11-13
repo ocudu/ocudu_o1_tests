@@ -34,8 +34,8 @@ PORT = int(os.getenv("MOCK_SMO_PORT", "9560"))
 TRIGGER_AFTER = int(os.getenv("MOCK_SMO_TRIGGER_AFTER", "3"))
 NETCONF_HOST = os.getenv("NETCONF_HOST", "ocudu-netconf")
 NETCONF_PORT = int(os.getenv("NETCONF_PORT", "830"))
-NETCONF_USERNAME = os.getenv("NETCONF_USERNAME", "root")
-NETCONF_PASSWORD = os.getenv("NETCONF_PASSWORD", "root")
+NETCONF_USERNAME = os.getenv("NETCONF_USERNAME", "o1test")
+NETCONF_PASSWORD = os.getenv("NETCONF_PASSWORD", "o1test")
 
 EVENT_LOG_LOCK = asyncio.Lock()
 

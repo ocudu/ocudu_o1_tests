@@ -16,8 +16,9 @@ the writes that group may not perform. This module proves two things:
   ``hybrid-odu`` TLS identity in a NACM group with the Table 6.5-1 rule-list):
   a ``sudo``-role client on that account is refused with ``access-denied`` where
   the table says read-only, while the ``hybrid-odu``-role client provisions the
-  full layout without ever tripping NACM. The root SSH session keeps its write
-  access, so the two paths are proven side by side.
+  full layout without ever tripping NACM. The provisioned SSH user keeps its write
+  access through the ``o1-admin`` permit-all rule, so the two paths are proven
+  side by side.
 
 sysrepo skips the NACM check when a merge produces no diff, so every denial
 test writes a value that differs from what the mock already holds.
@@ -229,12 +230,12 @@ def sudo_client_on_hybrid_odu_account(o1_adapter_src, hybrid_odu_tls_manager):
 
 
 @mark.timeout(60)
-def test_root_session_still_writes_interfaces(ru_config):
-    """The root SSH client keeps writing ietf-interfaces: the same values the
+def test_ssh_user_still_writes_interfaces(ru_config):
+    """The provisioned SSH user keeps writing ietf-interfaces: the same values the
     RU controller suite already provisioned, so the edit is a no-op re-apply and
     leaves the mock as it found it (it also guarantees the VLAN interface the
     processing element below references exists)."""
-    logger.info("Root SSH session: ietf-interfaces edit is accepted (NACM bypass for the recovery user).")
+    logger.info("SSH user session: ietf-interfaces edit is accepted (o1-admin permit-all rule).")
     ru_config.set_ietf_interfaces({"ru_mac_addr": PROFILE["ru_mac_addr"], "vlan": PROFILE["vlan"]})
 
     interfaces = _by_name((ru_config.get_ietf_interfaces().get("interfaces") or {}).get("interface"))

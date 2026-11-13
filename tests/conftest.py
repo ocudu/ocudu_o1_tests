@@ -98,8 +98,8 @@ def netconf_manager():
     """Create a NETCONF manager connection with retries."""
     host = os.getenv("NETCONF_HOST", "ocudu-netconf")
     port = int(os.getenv("NETCONF_PORT", "830"))
-    username = os.getenv("NETCONF_USERNAME", "root")
-    password = os.getenv("NETCONF_PASSWORD", "root")
+    username = os.getenv("NETCONF_USERNAME", "o1test")
+    password = os.getenv("NETCONF_PASSWORD", "o1test")
 
     def _connect():
         return manager.connect(
@@ -152,8 +152,8 @@ def mock_ru_ssh_manager():
     """Connect to the mock RU's NETCONF-over-SSH endpoint."""
     host = os.getenv("MOCK_RU_HOST", "ocudu-mock-ru")
     port = int(os.getenv("MOCK_RU_SSH_PORT", "830"))
-    username = os.getenv("NETCONF_USERNAME", "root")
-    password = os.getenv("NETCONF_PASSWORD", "root")
+    username = os.getenv("NETCONF_USERNAME", "o1test")
+    password = os.getenv("NETCONF_PASSWORD", "o1test")
 
     def _connect():
         return manager.connect(
@@ -536,8 +536,8 @@ def fresh_ru_manager():
     conn = manager.connect(
         host=os.getenv("MOCK_RU_HOST", "ocudu-mock-ru"),
         port=int(os.getenv("MOCK_RU_SSH_PORT", "830")),
-        username=os.getenv("NETCONF_USERNAME", "root"),
-        password=os.getenv("NETCONF_PASSWORD", "root"),
+        username=os.getenv("NETCONF_USERNAME", "o1test"),
+        password=os.getenv("NETCONF_PASSWORD", "o1test"),
         hostkey_verify=False,
         allow_agent=False,
         look_for_keys=False,

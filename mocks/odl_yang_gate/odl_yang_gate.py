@@ -347,8 +347,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", default=os.getenv("NETCONF_HOST", "ocudu-netconf"))
     parser.add_argument("--port", type=int, default=int(os.getenv("NETCONF_PORT", "830")))
-    parser.add_argument("--username", default=os.getenv("NETCONF_USERNAME", "root"))
-    parser.add_argument("--password", default=os.getenv("NETCONF_PASSWORD", "root"))
+    parser.add_argument("--username", default=os.getenv("NETCONF_USERNAME", "o1test"))
+    parser.add_argument("--password", default=os.getenv("NETCONF_PASSWORD", "o1test"))
     parser.add_argument("--profile", default=os.getenv("O1_ADAPTER_PROFILE", ""),
                         help="netconf profile under test, for reporting only")
     parser.add_argument("--connect-timeout", type=int, default=300)

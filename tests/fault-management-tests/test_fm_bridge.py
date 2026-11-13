@@ -454,8 +454,8 @@ def _sim_args():
     return SimpleNamespace(
         ru_netconf_host=os.getenv("MOCK_RU_HOST", "ocudu-mock-ru"),
         ru_netconf_port=int(os.getenv("MOCK_RU_SSH_PORT", "830")),
-        ru_netconf_username=os.getenv("NETCONF_USERNAME", "root"),
-        ru_netconf_password=os.getenv("NETCONF_PASSWORD", "root"),
+        ru_netconf_username=os.getenv("NETCONF_USERNAME", "o1test"),
+        ru_netconf_password=os.getenv("NETCONF_PASSWORD", "o1test"),
         ru_supervision_interval=60,
         ru_supervision_guard=10,
         ru_datastore="running",

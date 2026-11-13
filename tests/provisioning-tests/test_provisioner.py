@@ -513,8 +513,8 @@ def _sim_args():
     return SimpleNamespace(
         ru_netconf_host=os.getenv("MOCK_RU_HOST", "ocudu-mock-ru"),
         ru_netconf_port=int(os.getenv("MOCK_RU_SSH_PORT", "830")),
-        ru_netconf_username=os.getenv("NETCONF_USERNAME", "root"),
-        ru_netconf_password=os.getenv("NETCONF_PASSWORD", "root"),
+        ru_netconf_username=os.getenv("NETCONF_USERNAME", "o1test"),
+        ru_netconf_password=os.getenv("NETCONF_PASSWORD", "o1test"),
         ru_supervision_interval=60,
         ru_supervision_guard=10,
         ru_datastore="running",
@@ -675,7 +675,7 @@ def test_hybrid_provisioning_waits_for_the_management_planes_interface_against_s
 ):
     """hybrid-odu on the mock RU: with no interface on the profile's VLAN the
     cycle waits instead of pushing a processing element the O-RU would reject
-    (a leafref into ietf-interfaces); once a root session — the management
+    (a leafref into ietf-interfaces); once an SSH session — the management
     plane's stand-in — creates one under its own name, provisioning completes
     and the element references that name."""
     from mplane_session import MplaneSession

@@ -1337,8 +1337,8 @@ def _sim_args():
     return dict(
         ru_netconf_host=os.getenv("MOCK_RU_HOST", "ocudu-mock-ru"),
         ru_netconf_port=int(os.getenv("MOCK_RU_SSH_PORT", "830")),
-        ru_netconf_username=os.getenv("NETCONF_USERNAME", "root"),
-        ru_netconf_password=os.getenv("NETCONF_PASSWORD", "root"),
+        ru_netconf_username=os.getenv("NETCONF_USERNAME", "o1test"),
+        ru_netconf_password=os.getenv("NETCONF_PASSWORD", "o1test"),
     )
 
 
@@ -1366,8 +1366,8 @@ def test_callhome_session_against_sim(o1_adapter_src):
             o1_adapter_src,
             alarms,
             None,
-            ru_netconf_username=os.getenv("NETCONF_USERNAME", "root"),
-            ru_netconf_password=os.getenv("NETCONF_PASSWORD", "root"),
+            ru_netconf_username=os.getenv("NETCONF_USERNAME", "o1test"),
+            ru_netconf_password=os.getenv("NETCONF_PASSWORD", "o1test"),
             ru_callhome=True,
             ru_callhome_port=int(os.environ["MOCK_RU_CALLHOME_PORT"]),
             ru_callhome_bind=os.getenv("MOCK_RU_CALLHOME_BIND", "0.0.0.0"),
