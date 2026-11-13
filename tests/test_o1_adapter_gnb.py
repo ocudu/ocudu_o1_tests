@@ -204,6 +204,140 @@ def test_non_runtime_change_triggers_restart_request(
         )
 
 
+_NC_NS = "urn:ietf:params:xml:ns:netconf:base:1.0"
+_DU_PARENT = """
+<ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+  <id>ran1</id>
+  <GNBDUFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbdufunction">
+    <id>du1</id>
+    {}
+  </GNBDUFunction>
+</ManagedElement>
+"""
+
+
+def _edit_running(manager, tree: str):
+    manager.edit_config(target="running", config=f'<config xmlns="{_NC_NS}">{tree}</config>')
+
+
+@mark.timeout(180)
+def test_perf_metric_job_create_and_delete_without_restart(
+    netconf_manager, config_path, o1_adapter_base_url, read_ws_events, wait_for
+):
+    logger.info("Creating or deleting a PerfMetricJob is a runtime change and must not restart the gNB.")
+    # GNBDUFunction has no PerfMetricJob in the seed, so the adapter sees the whole node added/removed.
+    job = _DU_PARENT.format(
+        "<PerfMetricJob><id>runtime_job</id><attributes>"
+        "<administrativeState>UNLOCKED</administrativeState>"
+        "<performanceMetrics>DRB.MaxActiveUeDl</performanceMetrics>"
+        "<granularityPeriod>1</granularityPeriod>"
+        "<streamTarget>http://ocudu-mock-smo:9560/json</streamTarget>"
+        "</attributes></PerfMetricJob>"
+    )
+    removal = _DU_PARENT.format(
+        f'<PerfMetricJob xmlns:nc="{_NC_NS}" nc:operation="remove"><id>runtime_job</id></PerfMetricJob>'
+    )
+
+    def _count(cmd):
+        return sum(1 for e in read_ws_events() if e.get("cmd") == cmd)
+
+    def _apply(tree):
+        """Edit running and wait until the adapter has processed it: it rewrites the gNB config on every change."""
+        mtime = config_path.stat().st_mtime_ns
+        _edit_running(netconf_manager, tree)
+        wait_for(lambda: config_path.stat().st_mtime_ns != mtime, timeout=60)
+
+    quits, subscribes = _count("quit"), _count("metrics_subscribe")
+    try:
+        _apply(job)
+        # A newly active job makes the adapter re-subscribe to the gNB metrics.
+        wait_for(lambda: _count("metrics_subscribe") > subscribes, timeout=30)
+        _apply(removal)
+        assert _count("quit") == quits, "a PerfMetricJob change must not restart the gNB"
+        assert requests.get(f"{o1_adapter_base_url}/config-healthy", timeout=5).status_code == 200
+    finally:
+        _edit_running(netconf_manager, removal)
+
+
+_NRCELLCU1 = """
+<ManagedElement xmlns="urn:3gpp:sa5:_3gpp-common-managed-element">
+  <id>ran1</id>
+  <GNBCUCPFunction xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-gnbcucpfunction">
+    <id>cucp1</id>
+    <NRCellCU xmlns="urn:3gpp:sa5:_3gpp-nr-nrm-nrcellcu">
+      <id>nrcellcu1</id>
+      {}
+    </NRCellCU>
+  </GNBCUCPFunction>
+</ManagedElement>
+"""
+_NRCELLRELATION_NS = "urn:3gpp:sa5:_3gpp-nr-nrm-nrcellrelation"
+# Both NRCellRelations of nrcellcu1, as in the seed config.
+_NRCELLCU1_RELATIONS = _NRCELLCU1.format(
+    f"""
+      <NRCellRelation xmlns="{_NRCELLRELATION_NS}">
+        <id>rel-0-to-1</id>
+        <attributes>
+          <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
+          <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu2</adjacentNRCellRef>
+          <isENDCAllowed>false</isENDCAllowed>
+          <isMLBAllowed>true</isMLBAllowed>
+          <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+            <report_config_refs>2</report_config_refs>
+            <report_config_refs>3</report_config_refs>
+            <report_config_refs>4</report_config_refs>
+            <report_config_refs>5</report_config_refs>
+          </ocudu_nrcellrelation_mobility_extensions>
+        </attributes>
+      </NRCellRelation>
+      <NRCellRelation xmlns="{_NRCELLRELATION_NS}">
+        <id>rel-0-to-2</id>
+        <attributes>
+          <nRFreqRelationRef>NRFreqRelation=intra-freq</nRFreqRelationRef>
+          <adjacentNRCellRef>ManagedElement=ran1,GNBCUCPFunction=cucp1,NRCellCU=nrcellcu3</adjacentNRCellRef>
+          <isENDCAllowed>false</isENDCAllowed>
+          <isMLBAllowed>true</isMLBAllowed>
+          <ocudu_nrcellrelation_mobility_extensions xmlns="urn:ocudu-gnbcucpfunction-mobility-extension:1.0">
+            <report_config_refs>2</report_config_refs>
+          </ocudu_nrcellrelation_mobility_extensions>
+        </attributes>
+      </NRCellRelation>
+    """
+)
+
+
+@mark.timeout(300)
+def test_added_non_runtime_node_triggers_restart_request(netconf_manager, load_config, o1_adapter_base_url, wait_for):
+    logger.info("Adding a node that isn't runtime-updatable must still request a restart.")
+    session = requests.Session()
+
+    def _ncells():
+        # nrcellcu1 is NCI 0x1000; it drops out of the mobility cells once it has no ncells.
+        cells = load_config()["cu_cp"]["mobility"]["cells"]
+        return next((len(c.get("ncells") or []) for c in cells if c["nr_cell_id"] == 0x1000), 0)
+
+    def _restart_requested_and_cleared(ncells):
+        wait_for(lambda: session.get(f"{o1_adapter_base_url}/config-healthy", timeout=5).status_code == 400, timeout=90)
+        session.post(f"{o1_adapter_base_url}/restarted", timeout=5)
+        # The adapter renders the new config only after the gNB is back: wait for it, or the next
+        # change lands mid-restart.
+        wait_for(lambda: _ncells() == ncells, timeout=90)
+        wait_for(lambda: session.get(f"{o1_adapter_base_url}/config-healthy", timeout=5).status_code == 200, timeout=60)
+
+    # Drop every NRCellRelation of nrcellcu1, so that adding them back adds the whole node to the cell.
+    removal = "".join(
+        f'<NRCellRelation xmlns="{_NRCELLRELATION_NS}" xmlns:nc="{_NC_NS}" nc:operation="delete"><id>{rel}</id>'
+        "</NRCellRelation>"
+        for rel in ("rel-0-to-1", "rel-0-to-2")
+    )
+    _edit_running(netconf_manager, _NRCELLCU1.format(removal))
+    try:
+        _restart_requested_and_cleared(0)
+    finally:
+        _edit_running(netconf_manager, _NRCELLCU1_RELATIONS)
+    _restart_requested_and_cleared(2)
+
+
 @mark.timeout(240)
 def test_rrm_policy_ratio_update_sends_ws_command(
     netconf_manager,
