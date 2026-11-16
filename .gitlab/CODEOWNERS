@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# One section per area; a section's owners on its header apply to its paths.
+# A file matched in several sections needs approval from each of them.
+# See https://docs.gitlab.com/user/project/codeowners/
+
+[CI][1] @asaezper @Falkenber9
+/.gitlab-ci.yml
+/.gitlab/
+
+[General][1] @niklas-srs @andrepuschmann @asaezper
+*
+# Submodule pointers are pushed by CI, which code owner rules would block.
+!/ocudu_elements/

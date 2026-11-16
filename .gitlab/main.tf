@@ -73,6 +73,7 @@ module "settings" {
   resolve_outdated_diff_discussions                = false
   squash_option                                    = "never" # never, always, default_on, default_off
   allow_merge_on_skipped_pipeline                  = false
+  reviewer_assignment_strategy                     = "code_owners" # disabled, code_owners, null (Free tier)
 
   # =============================================================================
   # CI/CD Configuration
@@ -165,7 +166,7 @@ module "settings" {
     }
     dev = {
       allow_force_push             = false
-      code_owner_approval_required = false
+      code_owner_approval_required = true
       allowed_to_merge             = [{ access_level = "developer" }]
       allowed_to_push              = [{ access_level = "maintainer" }]
     }
